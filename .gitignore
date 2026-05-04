@@ -48,3 +48,4 @@ config.yml
 !.github/ISSUE_TEMPLATE/config.yml
 lang.ini
 plugins/
+.idea
