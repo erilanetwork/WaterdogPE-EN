@@ -15,6 +15,7 @@
 
 package dev.waterdog.waterdogpe.player;
 
+import dev.waterdog.waterdogpe.form.Form;
 import dev.waterdog.waterdogpe.network.connection.codec.compression.CompressionType;
 import dev.waterdog.waterdogpe.network.connection.handler.ReconnectReason;
 import dev.waterdog.waterdogpe.network.connection.peer.BedrockServerSession;
@@ -50,7 +51,9 @@ import org.cloudburstmc.protocol.common.util.Preconditions;
 
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Base Player class.
@@ -90,6 +93,8 @@ public class WaterdogPlayer implements ProxiedPlayer {
     private final LongSet chunkBlobs = LongSets.synchronize(new LongOpenHashSet());
     private final Object2ObjectMap<String, Permission> permissions = new Object2ObjectOpenHashMap<>();
     private final Collection<ServerInfo> pendingServers = ObjectCollections.synchronize(new ObjectArrayList<>());
+    private final Map<Integer, Form> pendingForms = new ConcurrentHashMap<>();
+    private final AtomicInteger formIdCounter = new AtomicInteger(0);
     private ClientConnection clientConnection;
     private ClientConnection pendingConnection;
 
@@ -238,7 +243,6 @@ public class WaterdogPlayer implements ProxiedPlayer {
 
         ServerInfo targetServer = event.getTargetServer();
         if (this.clientConnection != null && this.clientConnection.getServerInfo() == targetServer) {
-            this.sendMessage(new TranslationContainer("waterdog.downstream.connected", targetServer.getServerName()));
             return;
         }
 
@@ -329,9 +333,7 @@ public class WaterdogPlayer implements ProxiedPlayer {
 
         this.getLogger().error("[{}|{}] Unable to connect to downstream {}", this.getAddress(), this.getName(), targetServer.getServerName(), error);
         String exceptionMessage = Objects.requireNonNullElse(error.getLocalizedMessage(), error.getClass().getSimpleName());
-        if (this.sendToFallback(targetServer, ReconnectReason.EXCEPTION, exceptionMessage)) {
-            this.sendMessage(new TranslationContainer("waterdog.connected.fallback", targetServer.getServerName()));
-        } else {
+        if (!this.sendToFallback(targetServer, ReconnectReason.EXCEPTION, exceptionMessage)) {
             this.disconnect(new TranslationContainer("waterdog.downstream.transfer.failed", targetServer.getServerName(), exceptionMessage));
         }
     }
@@ -447,6 +449,32 @@ public class WaterdogPlayer implements ProxiedPlayer {
         if (this.connection != null && this.connection.isConnected()) {
             this.connection.sendPacket(packet);
         }
+    }
+
+    /**
+     * Sends a form to the player and tracks it for response handling.
+     *
+     * @param form the form to send
+     */
+    @Override
+    public void sendForm(Form form) {
+        int formId = this.formIdCounter.getAndIncrement();
+        this.pendingForms.put(formId, form);
+
+        ModalFormRequestPacket packet = new ModalFormRequestPacket();
+        packet.setFormId(formId);
+        packet.setFormData(form.getJsonData());
+        this.sendPacket(packet);
+    }
+
+    /**
+     * Removes and returns a pending form by its ID.
+     *
+     * @param formId the form ID
+     * @return the Form if found, or null
+     */
+    public Form removePendingForm(int formId) {
+        return this.pendingForms.remove(formId);
     }
 
     /**

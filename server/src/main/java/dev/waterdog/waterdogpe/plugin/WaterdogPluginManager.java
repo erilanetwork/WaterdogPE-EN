@@ -153,7 +153,7 @@ public class WaterdogPluginManager implements dev.waterdog.waterdogpe.plugin.Plu
             return null;
         }
 
-        this.proxy.getLogger().info("Loaded plugin {} successfully! (version={}, author={})", config.getName(), config.getVersion(), config.getAuthor());
+        this.proxy.getLogger().info("Enabling plugin {} v{}", config.getName(), config.getVersion());
         this.pluginMap.put(config.getName(), plugin);
         return plugin;
     }
@@ -216,7 +216,7 @@ public class WaterdogPluginManager implements dev.waterdog.waterdogpe.plugin.Plu
 
     public void disableAllPlugins() {
         for (Plugin plugin : this.pluginMap.values()) {
-            this.proxy.getLogger().info("Disabling plugin " + plugin.getName() + "!");
+            this.proxy.getLogger().info("Disabling plugin " + plugin.getName());
             try {
                 plugin.setEnabled(false);
             } catch (PluginChangeStateException e) {

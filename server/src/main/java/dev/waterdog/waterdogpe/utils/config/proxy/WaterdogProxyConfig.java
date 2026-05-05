@@ -86,7 +86,7 @@ public class WaterdogProxyConfig extends YamlConfig implements ProxyConfig {
 
     @Path("permissions_default")
     @Comment("List of permissions each player should get by default (empty using [])")
-    private List<String> defaultPermissions = new ArrayList<>(Arrays.asList("waterdog.command.help", "waterdog.command.info"));
+    private List<String> defaultPermissions = new ArrayList<>();
 
     @Path("enable_debug")
     @Comment("Whether the debug output in the console should be enabled or not")

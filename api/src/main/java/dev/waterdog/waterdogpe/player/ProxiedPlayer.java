@@ -2,6 +2,7 @@ package dev.waterdog.waterdogpe.player;
 
 import dev.waterdog.waterdogpe.ProxyServer;
 import dev.waterdog.waterdogpe.command.CommandSender;
+import dev.waterdog.waterdogpe.form.Form;
 import dev.waterdog.waterdogpe.network.connection.client.ClientConnection;
 import dev.waterdog.waterdogpe.network.protocol.ProtocolVersion;
 import dev.waterdog.waterdogpe.network.serverinfo.ServerInfo;
@@ -14,6 +15,8 @@ import java.util.Collection;
 import java.util.UUID;
 
 public interface ProxiedPlayer extends CommandSender {
+
+    void sendForm(Form form);
     String getName();
 
     UUID getUniqueId();

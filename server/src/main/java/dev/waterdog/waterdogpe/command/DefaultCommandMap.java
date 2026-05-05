@@ -26,13 +26,10 @@ public class DefaultCommandMap extends SimpleCommandMap {
     }
 
     public void registerDefaults() {
-        this.registerCommand(new HelpCommand());
-        this.registerCommand(new ListCommand());
-        this.registerCommand(new InfoCommand());
-        this.registerCommand(new ServerCommand());
-        this.registerCommand(new SendCommand());
         this.registerCommand(new EndCommand());
+        this.registerCommand(new ListCommand());
+        this.registerCommand(new ServerManagementCommand());
         this.registerCommand(new StatusCommand());
-        this.registerCommand(new PluginsCommand());
+        this.registerCommand(new TransferCommand());
     }
 }

@@ -50,3 +50,4 @@ lang.ini
 plugins/
 .idea
 build
+.gradle

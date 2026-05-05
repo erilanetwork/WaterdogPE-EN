@@ -79,6 +79,10 @@ public interface ProxyServer {
 
     Collection<ServerInfo> getServers();
 
+    boolean registerServerInfo(ServerInfo serverInfo);
+
+    ServerInfo removeServerInfo(String serverName);
+
     boolean isRunning();
 
     int getCurrentTick();

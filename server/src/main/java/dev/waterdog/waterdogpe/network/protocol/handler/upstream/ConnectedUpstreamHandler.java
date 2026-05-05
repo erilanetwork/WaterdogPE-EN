@@ -15,6 +15,13 @@
 
 package dev.waterdog.waterdogpe.network.protocol.handler.upstream;
 
+import dev.waterdog.waterdogpe.form.Form;
+import dev.waterdog.waterdogpe.form.SimpleForm;
+import dev.waterdog.waterdogpe.form.ModalForm;
+import dev.waterdog.waterdogpe.form.CustomForm;
+import dev.waterdog.waterdogpe.form.response.SimpleFormResponse;
+import dev.waterdog.waterdogpe.form.response.ModalFormResponse;
+import dev.waterdog.waterdogpe.form.response.CustomFormResponse;
 import dev.waterdog.waterdogpe.network.connection.ProxiedConnection;
 import dev.waterdog.waterdogpe.network.connection.client.ClientConnection;
 import dev.waterdog.waterdogpe.network.protocol.handler.ProxyPacketHandler;
@@ -30,6 +37,8 @@ import dev.waterdog.waterdogpe.network.protocol.handler.TransferCallback;
 import dev.waterdog.waterdogpe.player.WaterdogPlayer;
 import dev.waterdog.waterdogpe.network.protocol.Signals;
 import org.cloudburstmc.protocol.common.PacketSignal;
+
+import java.util.List;
 
 /**
  * Main handler for handling packets received from upstream.
@@ -90,6 +99,53 @@ public class ConnectedUpstreamHandler extends AbstractUpstreamHandler implements
             return Signals.CANCEL;
         }
         return PacketSignal.UNHANDLED;
+    }
+
+    @Override
+    public PacketSignal handle(ModalFormResponsePacket packet) {
+        Form form = this.player.removePendingForm(packet.getFormId());
+        if (form == null) {
+            return PacketSignal.UNHANDLED;
+        }
+
+        String data = packet.getFormData();
+        if (data == null || data.equalsIgnoreCase("null")) {
+            return Signals.CANCEL;
+        }
+
+        try {
+            if (form instanceof SimpleForm simpleForm) {
+                int buttonId = Integer.parseInt(data.trim());
+                List<dev.waterdog.waterdogpe.form.element.Button> buttons = simpleForm.getButtons();
+                if (buttonId >= 0 && buttonId < buttons.size()) {
+                    SimpleFormResponse response = new SimpleFormResponse(buttons.get(buttonId), buttonId);
+                    form.handleResponse(this.player, response);
+                }
+            } else if (form instanceof ModalForm) {
+                boolean clickedTrue = Boolean.parseBoolean(data.trim());
+                ModalFormResponse response = new ModalFormResponse(clickedTrue);
+                form.handleResponse(this.player, response);
+            } else if (form instanceof CustomForm) {
+                com.google.gson.JsonArray jsonArray = com.google.gson.JsonParser.parseString(data).getAsJsonArray();
+                java.util.Map<Integer, Object> responses = new java.util.HashMap<>();
+                for (int i = 0; i < jsonArray.size(); i++) {
+                    com.google.gson.JsonElement element = jsonArray.get(i);
+                    if (element.isJsonPrimitive()) {
+                        com.google.gson.JsonPrimitive prim = element.getAsJsonPrimitive();
+                        if (prim.isBoolean()) responses.put(i, prim.getAsBoolean());
+                        else if (prim.isNumber()) responses.put(i, prim.getAsDouble());
+                        else responses.put(i, prim.getAsString());
+                    } else {
+                        responses.put(i, element.toString());
+                    }
+                }
+                CustomFormResponse response = new CustomFormResponse(responses);
+                form.handleResponse(this.player, response);
+            }
+        } catch (Exception e) {
+            this.player.getLogger().debug("Error handling form response from " + this.player.getName(), e);
+        }
+        return Signals.CANCEL;
     }
 
     @Override

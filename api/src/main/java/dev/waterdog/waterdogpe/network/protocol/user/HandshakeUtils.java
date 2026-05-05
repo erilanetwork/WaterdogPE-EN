@@ -140,7 +140,7 @@ public class HandshakeUtils {
         if (xboxAuth) {
             ProxyConfig config = ProxyServer.getInstance().getConfiguration();
             if (config.useLoginExtras()) {
-                clientData.addProperty("Waterdog_Auth", true);
+                clientData.addProperty("Erila_Auth", true);
             }
         }
         return new HandshakeEntry(identityPublicKey, clientData, xuid, uuid, displayName, xboxAuth, protocol,
@@ -152,8 +152,8 @@ public class HandshakeUtils {
         ProxyConfig config = ProxyServer.getInstance().getConfiguration();
         if (config.useLoginExtras()) {
             // Add waterdog attributes
-            clientData.addProperty("Waterdog_XUID", xuid);
-            clientData.addProperty("Waterdog_IP", ((InetSocketAddress) session.getSocketAddress()).getAddress().getHostAddress());
+            clientData.addProperty("Erila_XUID", xuid);
+            clientData.addProperty("Erila_IP", ((InetSocketAddress) session.getSocketAddress()).getAddress().getHostAddress());
         }
         return clientData;
     }

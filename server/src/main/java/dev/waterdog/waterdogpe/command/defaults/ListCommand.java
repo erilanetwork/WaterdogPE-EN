@@ -30,7 +30,7 @@ import java.util.StringJoiner;
 public class ListCommand extends Command {
 
     public ListCommand() {
-        super("wdlist", CommandSettings.builder()
+        super("plist", CommandSettings.builder()
                 .setDescription("waterdog.command.list.description")
                 .setUsageMessage("waterdog.command.list.usage")
                 .setPermission("waterdog.command.list.permission")
@@ -48,12 +48,12 @@ public class ListCommand extends Command {
         List<ServerInfo> servers = new ArrayList<>(sender.getProxy().getServers());
         servers.sort(Comparator.comparing(ServerInfo::getServerName));
 
-        StringBuilder builder = new StringBuilder("§aShowing all servers:\n");
+        StringBuilder builder = new StringBuilder("§bTüm sunuculardaki oyuncular:\n");
         for (ServerInfo serverInfo : servers) {
             builder.append(this.buildServerList(serverInfo)).append("\n§r");
         }
 
-        builder.append("§rTotal online players: ").append(sender.getProxy().getPlayers().size());
+        builder.append("§bTotal online players: §3").append(sender.getProxy().getPlayers().size());
         sender.sendMessage(builder.toString());
         return true;
     }
