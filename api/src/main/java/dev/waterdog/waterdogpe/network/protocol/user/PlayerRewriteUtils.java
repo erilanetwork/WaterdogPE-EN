@@ -113,7 +113,7 @@ public class PlayerRewriteUtils {
 
     public static int determineDimensionId(int from, int to) {
         if (from == to) {
-            return from == DIMENSION_OVERWORLD ? DIMENSION_NETHER : DIMENSION_OVERWORLD;
+            return from == DIMENSION_OVERWORLD ? DIMENSION_END : DIMENSION_OVERWORLD;
         }
         return to;
     }

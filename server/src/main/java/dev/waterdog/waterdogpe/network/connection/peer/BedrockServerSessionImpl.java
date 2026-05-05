@@ -36,16 +36,17 @@ import org.cloudburstmc.protocol.common.PacketSignal;
 
 import java.util.function.Consumer;
 
-public class BedrockServerSession extends BedrockSession implements ProxiedConnection {
+public class BedrockServerSessionImpl extends BedrockSession implements BedrockServerSession {
     private static final dev.waterdog.waterdogpe.logger.Logger logger = dev.waterdog.waterdogpe.ProxyServer.getInstance().getLogger();
 
-    public BedrockServerSession(ProxiedBedrockPeer peer, int subClientId) {
+    public BedrockServerSessionImpl(ProxiedBedrockPeer peer, int subClientId) {
         super(peer, subClientId);
     }
 
 
+
     @Override
-    protected void onPacket(BedrockPacketWrapper packet) {
+    public void onPacket(BedrockPacketWrapper packet) {
         if (this.packetHandler instanceof ProxyBatchBridge bridge) {
             PacketSignal signal = bridge.handlePacket(packet.getPacket());
             if (signal != Signals.CANCEL) {
@@ -58,7 +59,8 @@ public class BedrockServerSession extends BedrockSession implements ProxiedConne
         }
     }
 
-    protected void onBedrockBatch(BedrockBatchWrapper batch) {
+    @Override
+    public void onBedrockBatch(BedrockBatchWrapper batch) {
         if (this.packetHandler instanceof ProxyBatchBridge bridge) {
             bridge.onBedrockBatch(this, batch);
         } else {
@@ -150,5 +152,10 @@ public class BedrockServerSession extends BedrockSession implements ProxiedConne
     @Override
     public PacketDirection getPacketDirection() {
         return PacketDirection.CLIENT_BOUND;
+    }
+
+    @Override
+    public boolean isSubClient() {
+        return super.isSubClient();
     }
 }

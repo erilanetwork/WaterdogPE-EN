@@ -28,6 +28,8 @@ dependencies {
 
 tasks.shadowJar {
     archiveFileName.set("Waterdog.jar")
+    mergeServiceFiles()
+    transform(com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer::class.java)
     manifest {
         attributes["Main-Class"] = "dev.waterdog.waterdogpe.WaterdogPE"
         attributes["Multi-Release"] = "true"

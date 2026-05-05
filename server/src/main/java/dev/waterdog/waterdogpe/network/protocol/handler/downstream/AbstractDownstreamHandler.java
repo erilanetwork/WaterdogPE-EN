@@ -26,9 +26,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodecHelper;
 import org.cloudburstmc.protocol.bedrock.data.camera.CameraPreset;
-import org.cloudburstmc.protocol.bedrock.data.command.CommandData;
-import org.cloudburstmc.protocol.bedrock.data.command.CommandEnumConstraint;
-import org.cloudburstmc.protocol.bedrock.data.command.CommandEnumData;
+import org.cloudburstmc.protocol.bedrock.data.command.*;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleNamedDefinition;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockBatchWrapper;
@@ -113,7 +111,7 @@ public abstract class AbstractDownstreamHandler implements ProxyPacketHandler {
                     command.getDescription(),
                     command.getFlags(),
                     command.getPermission(),
-                    new CommandEnumData(command.getName() + "_aliases", aliases, false),
+                    new CommandEnumData(command.getName() + "Aliases", aliases, false),
                     Collections.emptyList(),
                     command.getOverloads()));
         }
@@ -185,8 +183,6 @@ public abstract class AbstractDownstreamHandler implements ProxyPacketHandler {
         for (ItemDefinition definition : definitions) {
             if (runtimeIds.add(definition.getRuntimeId())) {
                 itemRegistry.add(definition);
-            } else {
-                player.getLogger().warning("[{}|{}] has duplicate item definition: {}", this.player.getName(), this.connection.getServerInfo().getServerName(), definition);
             }
         }
         codecHelper.setItemDefinitions(itemRegistry.build());

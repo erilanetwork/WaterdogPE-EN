@@ -19,6 +19,7 @@ import dev.waterdog.waterdogpe.ProxyServer;
 import dev.waterdog.waterdogpe.network.NetworkMetrics;
 import dev.waterdog.waterdogpe.network.connection.codec.server.ServerErrorHandler;
 import dev.waterdog.waterdogpe.network.connection.peer.BedrockServerSession;
+import dev.waterdog.waterdogpe.network.connection.peer.BedrockServerSessionImpl;
 import dev.waterdog.waterdogpe.network.connection.peer.ProxiedBedrockPeer;
 import dev.waterdog.waterdogpe.network.protocol.handler.upstream.LoginUpstreamHandler;
 import io.netty.channel.Channel;
@@ -30,7 +31,7 @@ import org.cloudburstmc.netty.handler.codec.raknet.common.RakSessionCodec;
 import org.cloudburstmc.protocol.bedrock.BedrockPeer;
 import org.cloudburstmc.protocol.bedrock.PacketDirection;
 
-public class ProxiedServerSessionInitializer extends ProxiedSessionInitializer<BedrockServerSession> {
+public class ProxiedServerSessionInitializer extends ProxiedSessionInitializer<BedrockServerSessionImpl> {
 
     public ProxiedServerSessionInitializer(ProxyServer proxy) {
         super(proxy);
@@ -60,15 +61,16 @@ public class ProxiedServerSessionInitializer extends ProxiedSessionInitializer<B
     }
 
     @Override
-    protected BedrockServerSession createSession0(BedrockPeer peer, int subClientId) {
+    protected BedrockServerSessionImpl createSession0(BedrockPeer peer, int subClientId) {
         this.proxy.getLogger().debug("[" + peer.getSocketAddress() + "] <-> Received first data");
-        return new BedrockServerSession((ProxiedBedrockPeer) peer, subClientId);
+        return new BedrockServerSessionImpl((ProxiedBedrockPeer) peer, subClientId);
     }
 
     @Override
-    protected void initSession(BedrockServerSession session) {
+    protected void initSession(BedrockServerSessionImpl session) {
         session.setPacketHandler(new LoginUpstreamHandler(this.proxy, session));
     }
+
 
     private static void disconnect(Channel channel, RakDisconnectReason reason) {
         if (channel instanceof RakChannel) {

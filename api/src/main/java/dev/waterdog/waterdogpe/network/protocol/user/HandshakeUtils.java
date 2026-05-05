@@ -27,7 +27,7 @@ import dev.waterdog.waterdogpe.network.protocol.ProtocolVersion;
 import dev.waterdog.waterdogpe.utils.config.proxy.ProxyConfig;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
-import org.cloudburstmc.protocol.bedrock.BedrockSession;
+import dev.waterdog.waterdogpe.network.connection.peer.BedrockServerSession;
 import org.cloudburstmc.protocol.bedrock.data.auth.CertificateChainPayload;
 import org.cloudburstmc.protocol.bedrock.packet.LoginPacket;
 import org.cloudburstmc.protocol.bedrock.packet.ServerToClientHandshakePacket;
@@ -114,7 +114,7 @@ public class HandshakeUtils {
         return jws.verify(new ECDSAVerifier(key));
     }
 
-    public static HandshakeEntry processHandshake(BedrockSession session, LoginPacket packet, ProtocolVersion protocol, boolean strict) throws Exception {
+    public static HandshakeEntry processHandshake(BedrockServerSession session, LoginPacket packet, ProtocolVersion protocol, boolean strict) throws Exception {
         ChainValidationResult result = EncryptionUtils.validatePayload(packet.getAuthPayload());
         boolean xboxAuth = result.signed();
         ChainValidationResult.IdentityClaims identityClaims = result.identityClaims();
@@ -147,7 +147,7 @@ public class HandshakeUtils {
                 packet.getAuthPayload() instanceof CertificateChainPayload);
     }
 
-    public static JsonObject parseClientData(JWSObject clientJwt, String xuid, BedrockSession session) {
+    public static JsonObject parseClientData(JWSObject clientJwt, String xuid, BedrockServerSession session) {
         JsonObject clientData = (JsonObject) JsonParser.parseString(clientJwt.getPayload().toString());
         ProxyConfig config = ProxyServer.getInstance().getConfiguration();
         if (config.useLoginExtras()) {
@@ -158,7 +158,7 @@ public class HandshakeUtils {
         return clientData;
     }
 
-    public static void processEncryption(BedrockSession session, PublicKey key) throws Exception {
+    public static void processEncryption(BedrockServerSession session, PublicKey key) throws Exception {
         byte[] token = EncryptionUtils.generateRandomToken();
         SecretKey encryptionKey = EncryptionUtils.getSecretKey(privateKeyPair.getPrivate(), key, token);
 

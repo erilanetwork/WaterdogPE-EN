@@ -187,6 +187,8 @@ public class WaterdogProxyServer implements ProxyServer {
             this.getConfiguration().setCompression(CompressionType.ZLIB);
         }
 
+        System.setProperty("bedrock.maxDecompressedBytes", String.valueOf(1024 * 1024 * 100));
+
         ThreadFactoryBuilder builder = ThreadFactoryBuilder
                 .builder()
                 .format("WaterdogTick Executor - #%d")

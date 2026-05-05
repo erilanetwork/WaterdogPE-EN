@@ -17,6 +17,9 @@ allprojects {
     }
 }
 
+// The shadowJar task is now handled by the :server module to avoid creating an empty root JAR.
+
+
 subprojects {
     apply(plugin = "java-library")
     apply(plugin = "io.freefair.lombok")

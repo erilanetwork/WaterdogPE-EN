@@ -84,13 +84,14 @@ public class ProxiedBedrockPeer extends BedrockPeer {
     }
 
     @Override
-    protected BedrockServerSession onSessionCreated(int sessionId) {
-        BedrockServerSession session = (BedrockServerSession) super.onSessionCreated(sessionId);
+    protected BedrockServerSessionImpl onSessionCreated(int sessionId) {
+        BedrockServerSessionImpl session = (BedrockServerSessionImpl) super.onSessionCreated(sessionId);
         if (this.firstSession == null) {
             this.firstSession = session;
         }
         return session;
     }
+
 
     @Override
     protected void removeSession(BedrockSession session) {

@@ -38,15 +38,10 @@ public class WaterdogPE {
 
     public static void main(String[] args) {
         Thread.currentThread().setName("WaterdogPE-main");
-        System.out.println("Starting WaterdogPE....");
         System.setProperty("log4j.skipJansi", "false");
 
         MainLogger logger = MainLogger.getLogger();
-        logger.info("§bStarting WaterDogPE proxy software!");
-        logger.info("§3Software Version: {}", versionInfo.baseVersion());
-        logger.info("§3Build Version: {}", versionInfo.buildVersion());
-        logger.info("§3Development Build: {}", versionInfo.debug());
-        logger.info("§3Software Authors: {}", versionInfo.author());
+        logger.info("§bStarting WaterdogPE-EN proxy software!");
         logger.info("§3Latest Supported Game Version: {}", ProtocolVersion.latest().getMinecraftVersion());
 
 

@@ -41,7 +41,7 @@ public class ListCommand extends Command {
     public boolean onExecute(CommandSender sender, String alias, String[] args) {
         if (args.length >= 1) {
             ServerInfo serverInfo = sender.getProxy().getServerInfo(args[0]);
-            sender.sendMessage(serverInfo == null ? "§cServer not found!" : this.buildServerList(serverInfo));
+            sender.sendMessage(serverInfo == null ? "§cSunucu bulunamadı." : this.buildServerList(serverInfo));
             return true;
         }
 
@@ -53,7 +53,7 @@ public class ListCommand extends Command {
             builder.append(this.buildServerList(serverInfo)).append("\n§r");
         }
 
-        builder.append("§bTotal online players: §3").append(sender.getProxy().getPlayers().size());
+        builder.append("§bToplam aktif oyuncu: §3").append(sender.getProxy().getPlayers().size());
         sender.sendMessage(builder.toString());
         return true;
     }
