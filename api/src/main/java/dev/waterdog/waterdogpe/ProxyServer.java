@@ -6,6 +6,7 @@ import dev.waterdog.waterdogpe.command.ConsoleCommandSender;
 import dev.waterdog.waterdogpe.event.EventManager;
 import dev.waterdog.waterdogpe.logger.Logger;
 import dev.waterdog.waterdogpe.network.serverinfo.ServerInfo;
+import dev.waterdog.waterdogpe.network.serverinfo.ServerInfoMap;
 import dev.waterdog.waterdogpe.packs.PackManager;
 import dev.waterdog.waterdogpe.player.PlayerManager;
 import dev.waterdog.waterdogpe.player.ProxiedPlayer;
@@ -78,6 +79,8 @@ public interface ProxyServer {
     ServerInfo getServerInfo(String address, int port);
 
     Collection<ServerInfo> getServers();
+
+    ServerInfoMap getServerInfoMap();
 
     boolean registerServerInfo(ServerInfo serverInfo);
 

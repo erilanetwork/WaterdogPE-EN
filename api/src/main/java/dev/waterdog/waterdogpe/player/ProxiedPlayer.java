@@ -68,4 +68,8 @@ public interface ProxiedPlayer extends CommandSender {
     void onDownstreamTimeout(ServerInfo serverInfo);
 
     dev.waterdog.waterdogpe.logger.Logger getLogger();
+
+    ClientConnection getDownstreamConnection();
+
+    void setDownstreamConnection(ClientConnection connection);
 }
