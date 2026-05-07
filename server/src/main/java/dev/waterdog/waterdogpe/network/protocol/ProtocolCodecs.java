@@ -119,6 +119,10 @@ public class ProtocolCodecs {
         HANDLED_PACKETS.add(PlayerUpdateEntityOverridesPacket.class);
         HANDLED_PACKETS.add(PlayerLocationPacket.class);
         HANDLED_PACKETS.add(CameraPresetsPacket.class);
+        HANDLED_PACKETS.add(ModalFormRequestPacket.class);
+        HANDLED_PACKETS.add(ModalFormResponsePacket.class);
+        HANDLED_PACKETS.add(ServerSettingsRequestPacket.class);
+        HANDLED_PACKETS.add(ServerSettingsResponsePacket.class);
     }
 
     private static final List<ProtocolCodecUpdater> UPDATERS = new ObjectArrayList<>();

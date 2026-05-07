@@ -149,7 +149,11 @@ public abstract class BedrockPacketCodec extends MessageToMessageCodec<BedrockBa
         if (packet instanceof UnknownPacket) {
             return ((UnknownPacket) packet).getPacketId();
         }
-        return this.codec.getPacketDefinition(packet.getClass()).getId();
+        var definition = this.codec.getPacketDefinition(packet.getClass());
+        if (definition == null) {
+            throw new IllegalArgumentException("Packet " + packet.getClass().getSimpleName() + " is not registered in codec " + this.codec.getMinecraftVersion());
+        }
+        return definition.getId();
     }
 
     public final BedrockPacketCodec setCodecHelper(BedrockCodec codec, BedrockCodecHelper helper) {

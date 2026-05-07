@@ -1,13 +1,14 @@
 package dev.waterdog.waterdogpe.form.element;
 
-import java.util.HashMap;
-import java.util.Map;
+import lombok.Getter;
+import lombok.Setter;
 
 public class Button {
 
+    @Setter
+    @Getter
     private String text;
-    private ButtonType type;
-    private String image;
+    private ButtonImage image;
 
     public Button(String text) {
         this.text = text;
@@ -15,41 +16,54 @@ public class Button {
 
     public Button(String text, ButtonType type, String image) {
         this.text = text;
-        this.type = type;
-        this.image = image;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
+        if (type != null && image != null) {
+            this.image = new ButtonImage(type.name().toLowerCase(), image);
+        }
     }
 
     public ButtonType getType() {
-        return type;
+        return image == null ? null : ButtonType.valueOf(image.type.toUpperCase());
     }
 
     public void setType(ButtonType type) {
-        this.type = type;
+        if (type == null) {
+            this.image = null;
+        } else {
+            String data = image == null ? "" : image.data;
+            this.image = new ButtonImage(type.name().toLowerCase(), data);
+        }
     }
 
     public String getImage() {
-        return image;
+        return image == null ? null : image.data;
     }
 
     public void setImage(String image) {
+        if (image == null) {
+            this.image = null;
+        } else {
+            String type = this.image == null ? "path" : this.image.type;
+            this.image = new ButtonImage(type, image);
+        }
+    }
+
+    public ButtonImage getButtonImage() {
+        return image;
+    }
+
+    public void setButtonImage(ButtonImage image) {
         this.image = image;
     }
 
-    public Map<String, Object> getImageData() {
-        if (type == null || image == null) {
-            return null;
+    @Getter
+    public static class ButtonImage {
+        private final String type;
+        private final String data;
+
+        public ButtonImage(String type, String data) {
+            this.type = type;
+            this.data = data;
         }
-        Map<String, Object> data = new HashMap<>();
-        data.put("type", type.name().toLowerCase());
-        data.put("data", image);
-        return data;
+
     }
 }
