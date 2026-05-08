@@ -15,7 +15,6 @@
 
 package dev.waterdog.waterdogpe.command.defaults;
 
-import dev.waterdog.waterdogpe.ProxyServer;
 import dev.waterdog.waterdogpe.command.Command;
 import dev.waterdog.waterdogpe.command.CommandSender;
 import dev.waterdog.waterdogpe.command.CommandSettings;
@@ -55,7 +54,7 @@ public class TransferCommand extends Command {
 
         SimpleForm form = new SimpleForm(
                 "Sunucu Değiştir",
-                "Birbirinden güzel §bErila§7Network §rsunucularında\noynamaya ne dersin?"
+                "Birbirinden güzel Erila Network sunucularında oynamaya ne dersin?"
         );
 
         for (ServerInfo server : serverList) {

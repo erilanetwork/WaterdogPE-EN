@@ -55,11 +55,6 @@ public class ServerManagementCommand extends Command {
 
         ProxiedPlayer player = (ProxiedPlayer) sender;
 
-        if (!player.hasPermission("waterdog.command.servermanagement.permission")) {
-            player.sendMessage("§cBu komutu kullanma yetkiniz yok!");
-            return true;
-        }
-
         showMainMenu(player);
         return true;
     }
@@ -69,7 +64,7 @@ public class ServerManagementCommand extends Command {
 
         form.addButton(new Button("Sunucu Listesi", ButtonType.PATH, "textures/items/book_normal"));
         form.addButton(new Button("Sunucu Ekle", ButtonType.PATH, "textures/items/emerald"));
-        form.addButton(new Button("Sunucu Kaldır", ButtonType.PATH, "textures/items/barrier"));
+        form.addButton(new Button("Sunucu Kaldır", ButtonType.PATH, "textures/blocks/barrier"));
 
         form.setResponseHandler((respondingPlayer, response) -> {
             if (response instanceof SimpleFormResponse simpleResponse) {
@@ -130,7 +125,7 @@ public class ServerManagementCommand extends Command {
         if (!server.getPlayers().isEmpty()) {
             content.append("§7Oyuncular:\n");
             for (ProxiedPlayer p : server.getPlayers()) {
-                content.append(p.getName()).append(" §7 - §b").append(p.getPing()).append(" ms").append("\n");
+                content.append(p.getName()).append("§7 - §f").append(p.getPing()).append(" ms").append("\n");
             }
         }
 
@@ -216,7 +211,7 @@ public class ServerManagementCommand extends Command {
         );
 
         for (ServerInfo server : servers) {
-            form.addButton(new Button(server.getServerName(), ButtonType.PATH, "textures/items/barrier"));
+            form.addButton(new Button(server.getServerName(), ButtonType.PATH, "textures/blocks/barrier"));
         }
 
         form.addButton(new Button("§cGeri", ButtonType.PATH, "textures/ui/back_button_pressed"));
