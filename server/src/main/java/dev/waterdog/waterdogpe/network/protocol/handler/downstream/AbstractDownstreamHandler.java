@@ -84,6 +84,8 @@ public abstract class AbstractDownstreamHandler implements ProxyPacketHandler {
         if (!this.player.getProxy().getConfiguration().injectCommands()) {
             return PacketSignal.UNHANDLED;
         }
+
+        System.out.println(packet.getCommands().toString());
         int sizeBefore = packet.getCommands().size();
 
         for (Command command : this.player.getProxy().getCommandMap().getCommands().values()) {
@@ -114,6 +116,16 @@ public abstract class AbstractDownstreamHandler implements ProxyPacketHandler {
                     new CommandEnumData(command.getName() + "Aliases", aliases, false),
                     Collections.emptyList(),
                     command.getOverloads()));
+        }
+
+        for(CommandData command : packet.getCommands()) {
+            for(CommandOverloadData overload : command.getOverloads()) {
+                for(CommandParamData param : overload.getOverloads()) {
+                    if(param.getType() == null) {
+                        param.setType(CommandParam.UNKNOWN);
+                    }
+                }
+            }
         }
         return PacketSignal.HANDLED;
     }
