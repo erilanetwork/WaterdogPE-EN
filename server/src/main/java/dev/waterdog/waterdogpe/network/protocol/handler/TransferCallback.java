@@ -25,6 +25,7 @@ import dev.waterdog.waterdogpe.network.protocol.rewrite.types.RewriteData;
 import dev.waterdog.waterdogpe.player.WaterdogPlayer;
 import dev.waterdog.waterdogpe.utils.types.TranslationContainer;
 import org.cloudburstmc.math.vector.Vector3f;
+import org.cloudburstmc.protocol.bedrock.packet.CameraInstructionPacket;
 import org.cloudburstmc.protocol.bedrock.packet.SetLocalPlayerAsInitializedPacket;
 import org.cloudburstmc.protocol.bedrock.packet.StopSoundPacket;
 
@@ -43,15 +44,17 @@ public class TransferCallback {
     private final ServerInfo targetServer;
     private final ServerInfo sourceServer;
     private final int targetDimension;
+    private final boolean fastTransfer;
 
     private volatile TransferPhase transferPhase = PHASE_1;
 
-    public TransferCallback(WaterdogPlayer player, ClientConnection connection, ServerInfo sourceServer, int targetDimension) {
+    public TransferCallback(WaterdogPlayer player, ClientConnection connection, ServerInfo sourceServer, int targetDimension, boolean fastTransfer) {
         this.player = player;
         this.connection = connection;
         this.targetServer = connection.getServerInfo();
         this.sourceServer = sourceServer;
         this.targetDimension = targetDimension;
+        this.fastTransfer = fastTransfer;
     }
 
     public boolean onDimChangeSuccess() {
@@ -111,6 +114,11 @@ public class TransferCallback {
         this.connection.setPacketHandler(new ConnectedDownstreamHandler(player, this.connection));
 
         this.player.getConnection().setTransferQueueActive(false);
+        if (this.fastTransfer) {
+            CameraInstructionPacket clearPacket = new CameraInstructionPacket();
+            clearPacket.setClear(true);
+            this.player.getConnection().sendPacketImmediately(clearPacket);
+        }
         if (this.player.getConnection().getPacketHandler() instanceof ConnectedUpstreamHandler handler) {
             handler.setTargetConnection(this.connection);
         }

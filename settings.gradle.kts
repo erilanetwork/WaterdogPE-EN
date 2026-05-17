@@ -1,4 +1,4 @@
-rootProject.name = "waterdog"
+rootProject.name = "WaterdogPE"
 
 include("api")
 include("server")

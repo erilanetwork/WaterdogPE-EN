@@ -22,6 +22,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import lombok.extern.log4j.Log4j2;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.protocol.bedrock.data.ScoreInfo;
+import org.cloudburstmc.protocol.bedrock.data.camera.CameraFadeInstruction;
 import org.cloudburstmc.protocol.bedrock.packet.*;
 import dev.waterdog.waterdogpe.event.defaults.ServerTransferEvent;
 import dev.waterdog.waterdogpe.network.protocol.ProtocolVersion;
@@ -42,6 +43,7 @@ import java.security.interfaces.ECPublicKey;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.UUID;
+import java.awt.Color;
 
 import static dev.waterdog.waterdogpe.network.protocol.user.PlayerRewriteUtils.*;
 
@@ -189,23 +191,33 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
         // After client successfully changes dimension we receive PlayerActionPacket#DIMENSION_CHANGE_SUCCESS and continue in transfer
         int newDimension = determineDimensionId(rewriteData.getDimension(), packet.getDimensionId());
 
-        TransferCallback transferCallback = new TransferCallback(this.player, this.connection, oldConnection.getServerInfo(), packet.getDimensionId());
-        rewriteData.setDimension(newDimension);
+        boolean fastTransfer = event.isTransferScreenAllowed() && newDimension != packet.getDimensionId();
+        TransferCallback transferCallback = new TransferCallback(this.player, this.connection, oldConnection.getServerInfo(), packet.getDimensionId(), fastTransfer);
+        if (fastTransfer) {
+            rewriteData.setDimension(packet.getDimensionId());
+        } else {
+            rewriteData.setDimension(newDimension);
+        }
         rewriteData.setTransferCallback(transferCallback);
 
-        boolean fastTransfer = event.isTransferScreenAllowed() && newDimension != packet.getDimensionId();
         if (fastTransfer) {
-            Vector3f fakePosition = packet.getPlayerPosition().add(2000, 0, 2000);
-            injectPosition(this.player.getConnection(), fakePosition, packet.getRotation(), rewriteData.getEntityId());
+            CameraInstructionPacket cameraPacket = new CameraInstructionPacket();
+            CameraFadeInstruction fade = new CameraFadeInstruction(
+                    new CameraFadeInstruction.TimeData(0.5f, 1.5f, 0.5f),
+                    new Color(14, 24, 52)
+            );
+            cameraPacket.setFadeInstruction(fade);
+            this.player.getConnection().sendPacketImmediately(cameraPacket);
+
             this.player.getConnection().setTransferQueueActive(true);
-            injectDimensionChange(this.player.getConnection(), newDimension, fakePosition,
-                    rewriteData.getEntityId(), player.getProtocol(), true);
-            // Force client to exit first dim screen after one second
+
+            // Complete the transfer after 20 ticks (1 second) delay
             this.player.getProxy().getScheduler().scheduleDelayed(() -> {
-                PlayStatusPacket statusPacket = new PlayStatusPacket();
-                statusPacket.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
-                this.player.getConnection().sendPacketImmediately(statusPacket);
-            }, 40);
+                if (rewriteData.getTransferCallback() == transferCallback) {
+                    transferCallback.onDimChangeSuccess();
+                    transferCallback.onDimChangeSuccess();
+                }
+            }, 20);
         } else if (newDimension == packet.getDimensionId()) {
             // Transfer between different dimensions
             injectPosition(this.player.getConnection(), packet.getPlayerPosition(), packet.getRotation(), rewriteData.getEntityId());
