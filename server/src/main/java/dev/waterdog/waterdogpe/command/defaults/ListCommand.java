@@ -59,7 +59,7 @@ public class ListCommand extends Command {
     }
 
     private String buildServerList(ServerInfo serverInfo) {
-        StringJoiner joiner = new StringJoiner(",");
+        StringJoiner joiner = new StringJoiner(", ");
         for (ProxiedPlayer player : serverInfo.getPlayers()) {
             joiner.add(player.getName());
         }
