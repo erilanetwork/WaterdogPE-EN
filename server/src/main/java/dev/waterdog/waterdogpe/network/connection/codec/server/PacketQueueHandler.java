@@ -7,7 +7,6 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.internal.PlatformDependent;
-import lombok.extern.log4j.Log4j2;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockBatchWrapper;
 
 import java.util.Queue;
@@ -15,8 +14,8 @@ import java.util.Queue;
 public class PacketQueueHandler extends ChannelDuplexHandler {
     private static final dev.waterdog.waterdogpe.logger.Logger logger = dev.waterdog.waterdogpe.ProxyServer.getInstance().getLogger();
     public static final String NAME = "packet-queue-handler";
-    private static final int MAX_BATCHES = 256;
-    private static final int MAX_PACKETS = 8000;
+    private static final int MAX_BATCHES = 1024;
+    private static final int MAX_PACKETS = 32000;
 
     private final BedrockServerSession session;
 

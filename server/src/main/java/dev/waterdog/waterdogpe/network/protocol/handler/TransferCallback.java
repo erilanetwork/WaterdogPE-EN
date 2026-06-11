@@ -128,12 +128,16 @@ public class TransferCallback {
     }
 
     public void onTransferFailed() {
-        if (!this.player.sendToFallback(this.targetServer, ReconnectReason.TRANSFER_FAILED, "Disconnected")) {
-            this.player.disconnect(new TranslationContainer("waterdog.downstream.transfer.failed", targetServer.getServerName(), "Sunucu kapandı"));
+        this.onTransferFailed("Sunucu kapandı");
+    }
+
+    public void onTransferFailed(String reason) {
+        if (!this.player.sendToFallback(this.targetServer, ReconnectReason.TRANSFER_FAILED, reason)) {
+            this.player.disconnect(new TranslationContainer("waterdog.downstream.transfer.failed", targetServer.getServerName(), reason));
         }
 
         this.connection.disconnect();
-        this.player.getLogger().warning("Failed to transfer " + this.player.getName() + " to " + this.targetServer.getServerName() + ": Sunucu kapandı");
+        this.player.getLogger().warning("Failed to transfer " + this.player.getName() + " to " + this.targetServer.getServerName() + ": " + reason);
     }
 
     public TransferPhase getPhase() {

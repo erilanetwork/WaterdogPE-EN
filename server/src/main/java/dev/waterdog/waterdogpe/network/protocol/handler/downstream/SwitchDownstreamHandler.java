@@ -238,7 +238,7 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
         TransferCallback transferCallback = this.player.getRewriteData().getTransferCallback();
         if (transferCallback != null) {
             // Player was already disconnected from old downstream
-            transferCallback.onTransferFailed();
+            transferCallback.onTransferFailed(packet.getKickMessage() == null ? "Sunucu kapandı" : packet.getKickMessage());
             return Signals.CANCEL;
         }
 
