@@ -177,6 +177,10 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
         }
         scoreboards.clear();
 
+        // ContainerClosePacket can not close the player's own inventory window. If the previous server left it
+        // open the client gets stuck and refuses to open any inventory, so force it shut via the SLEEPING flag.
+        injectForceCloseInventory(this.player.getConnection(), rewriteData.getEntityId());
+
         injectRemoveAllEffects(this.player.getConnection(), rewriteData.getEntityId(), this.player.getProtocol());
         injectClearWeather(this.player.getConnection());
 
