@@ -222,7 +222,7 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
             // Transfer between different dimensions
             injectPosition(this.player.getConnection(), packet.getPlayerPosition(), packet.getRotation(), rewriteData.getEntityId());
             injectDimensionChange(this.player.getConnection(), newDimension, packet.getPlayerPosition(),
-                    rewriteData.getEntityId(), player.getProtocol(), false);
+                    rewriteData.getEntityId(), player.getProtocol(), false, this.player.isSubChunkRequestMode());
             transferCallback.onDimChangeSuccess(); // Simulate two dim-change behaviour
         } else {
             injectPosition(this.player.getConnection(), packet.getPlayerPosition(), packet.getRotation(), rewriteData.getEntityId());

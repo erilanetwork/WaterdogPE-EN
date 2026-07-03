@@ -123,6 +123,16 @@ public class ProtocolCodecs {
         HANDLED_PACKETS.add(ModalFormResponsePacket.class);
         HANDLED_PACKETS.add(ServerSettingsRequestPacket.class);
         HANDLED_PACKETS.add(ServerSettingsResponsePacket.class);
+        HANDLED_PACKETS.add(AddVolumeEntityPacket.class);
+        HANDLED_PACKETS.add(RemoveVolumeEntityPacket.class);
+        HANDLED_PACKETS.add(PlayerFogPacket.class);
+        HANDLED_PACKETS.add(UpdateClientInputLocksPacket.class);
+        HANDLED_PACKETS.add(SetHudPacket.class);
+        HANDLED_PACKETS.add(ContainerOpenPacket.class);
+        HANDLED_PACKETS.add(ContainerClosePacket.class);
+        HANDLED_PACKETS.add(SetTimePacket.class);
+        HANDLED_PACKETS.add(SubChunkRequestPacket.class);
+        HANDLED_PACKETS.add(SubChunkPacket.class);
     }
 
     private static final List<ProtocolCodecUpdater> UPDATERS = new ObjectArrayList<>();

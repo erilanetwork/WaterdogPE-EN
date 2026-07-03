@@ -127,8 +127,16 @@ public class WaterdogPlayer implements ProxiedPlayer {
     private volatile boolean acceptPlayStatus = false;
     private volatile boolean acceptResourcePacks = true;
     private volatile boolean acceptItemComponentPacket = true;
+    /**
+     * Whether the current downstream server serves chunks using the sub-chunk request system
+     * (LevelChunkPacket with a negative sub-chunk count). When set, injected empty chunks must use
+     * request mode too, otherwise the client breaks instead of requesting the sub-chunks.
+     */
+    private volatile boolean subChunkRequestMode = false;
     private final Collection<PluginPacketHandler> pluginPacketHandlers = new ObjectArrayList<>();
 
+    public boolean isSubChunkRequestMode() { return subChunkRequestMode; }
+    public void setSubChunkRequestMode(boolean subChunkRequestMode) { this.subChunkRequestMode = subChunkRequestMode; }
     public boolean acceptPlayStatus() { return acceptPlayStatus; }
     public void setAcceptPlayStatus(boolean acceptPlayStatus) { this.acceptPlayStatus = acceptPlayStatus; }
     public boolean acceptResourcePacks() { return acceptResourcePacks; }
