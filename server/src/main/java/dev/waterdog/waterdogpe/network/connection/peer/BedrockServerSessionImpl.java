@@ -133,7 +133,7 @@ public class BedrockServerSessionImpl extends BedrockSession implements BedrockS
                 bridge.setHandler(packetHandler);
             } else {
                 super.setPacketHandler(new ProxyBatchBridge(this.getPeer().getCodec(),
-                        this.getPeer().getCodecHelper(), packetHandler));
+                        this.getPeer().getCodecHelper(), packetHandler, this.getPacketDirection()));
             }
         } else {
             super.setPacketHandler(handler);
