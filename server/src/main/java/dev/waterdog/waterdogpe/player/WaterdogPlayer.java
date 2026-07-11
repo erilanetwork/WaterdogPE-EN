@@ -333,6 +333,11 @@ public class WaterdogPlayer implements ProxiedPlayer {
 
         this.getLogger().error("[{}|{}] Unable to connect to downstream {}", this.getAddress(), this.getName(), targetServer.getServerName(), error);
         String exceptionMessage = Objects.requireNonNullElse(error.getLocalizedMessage(), error.getClass().getSimpleName());
+        if (this.clientConnection != null && this.clientConnection.isConnected()) {
+            this.sendMessage(new TranslationContainer("waterdog.downstream.transfer.failed", targetServer.getServerName(), exceptionMessage));
+            return;
+        }
+
         if (!this.sendToFallback(targetServer, ReconnectReason.EXCEPTION, exceptionMessage)) {
             this.disconnect(new TranslationContainer("waterdog.downstream.transfer.failed", targetServer.getServerName(), exceptionMessage));
         }
