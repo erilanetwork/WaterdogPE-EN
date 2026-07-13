@@ -225,7 +225,7 @@ public class WaterdogProxyServer implements ProxyServer {
         this.commandSender = new WaterdogConsoleCommandSender(this);
         this.commandMap = new DefaultCommandMap(this, SimpleCommandMap.DEFAULT_PREFIX);
         this.console = new TerminalConsole(this);
-        this.serverId = ThreadLocalRandom.current().nextLong();
+        this.serverId = createRandomGUID();
 
         this.pluginManager.loadAllPlugins();
         this.configurationManager.loadServerInfos(this.serverInfoMap);
@@ -555,6 +555,12 @@ public class WaterdogProxyServer implements ProxyServer {
     @Deprecated
     public boolean isDebug() {
         return WaterdogPE.version().debug();
+    }
+
+    // BDS accepts any GUID that is unique, but client itself sends negative GUID so we mirror that behavior.
+    // Some raknet implementations like go-raknet seem to enforce this rule.
+    public static long createRandomGUID() {
+        return ThreadLocalRandom.current().nextLong(Long.MIN_VALUE, 0);
     }
 
 }

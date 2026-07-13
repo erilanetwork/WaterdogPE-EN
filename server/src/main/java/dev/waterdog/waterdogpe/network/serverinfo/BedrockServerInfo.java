@@ -17,6 +17,7 @@ package dev.waterdog.waterdogpe.network.serverinfo;
 
 import dev.waterdog.waterdogpe.ProxyServer;
 import dev.waterdog.waterdogpe.network.EventLoops;
+import dev.waterdog.waterdogpe.WaterdogProxyServer;
 import dev.waterdog.waterdogpe.network.connection.client.ClientConnection;
 import dev.waterdog.waterdogpe.network.connection.codec.client.ClientPingHandler;
 import dev.waterdog.waterdogpe.network.connection.codec.initializer.ProxiedClientSessionInitializer;
@@ -60,6 +61,7 @@ public class BedrockServerInfo extends AbstractServerInfo implements ServerInfo 
         new Bootstrap()
                 .channelFactory(RakChannelFactory.client(EventLoops.getChannelType().getDatagramChannel()))
                 .group(eventLoop)
+                .option(RakChannelOption.RAK_GUID, WaterdogProxyServer.createRandomGUID())
                 .option(RakChannelOption.RAK_PROTOCOL_VERSION, version.getRaknetVersion())
                 .option(RakChannelOption.RAK_ORDERING_CHANNELS, 1)
                 .option(RakChannelOption.RAK_CONNECT_TIMEOUT, networkSettings.getConnectTimeout() * 1000L)
@@ -82,9 +84,9 @@ public class BedrockServerInfo extends AbstractServerInfo implements ServerInfo 
         new Bootstrap()
                 .channelFactory(RakChannelFactory.client(EventLoops.getChannelType().getDatagramChannel()))
                 .group(eventLoop)
-                .option(RakChannelOption.RAK_GUID, ThreadLocalRandom.current().nextLong())
+                .option(RakChannelOption.RAK_GUID, RakNetInterface.createRandomGUID())
                 .handler(new ClientPingHandler(promise, timeout, timeUnit))
-                .bind(ThreadLocalRandom.current().nextInt(10000, 15000))
+                .bind(0)
                 .addListener((ChannelFuture future) -> {
                     if (future.cause() != null) {
                         promise.tryFailure(future.cause());
