@@ -19,6 +19,7 @@ import dev.waterdog.waterdogpe.command.Command;
 import dev.waterdog.waterdogpe.network.connection.client.ClientConnection;
 import dev.waterdog.waterdogpe.network.protocol.ProtocolVersion;
 import dev.waterdog.waterdogpe.network.protocol.handler.ProxyPacketHandler;
+import dev.waterdog.waterdogpe.network.protocol.handler.TransferCallback;
 import dev.waterdog.waterdogpe.network.protocol.rewrite.RewriteMaps;
 import dev.waterdog.waterdogpe.player.WaterdogPlayer;
 import dev.waterdog.waterdogpe.network.protocol.Signals;
@@ -48,6 +49,18 @@ public abstract class AbstractDownstreamHandler implements ProxyPacketHandler {
     public AbstractDownstreamHandler(WaterdogPlayer player, ClientConnection connection) {
         this.player = player;
         this.connection = connection;
+    }
+
+    @Override
+    public PacketSignal handle(PlayStatusPacket packet) {
+        if (packet.getStatus() != PlayStatusPacket.Status.PLAYER_SPAWN) {
+            return PacketSignal.UNHANDLED;
+        }
+        TransferCallback transferCallback = player.getRewriteData().getTransferCallback();
+        if (transferCallback != null && transferCallback.getConnection() == this.connection) {
+            transferCallback.onPlayStatus();
+        }
+        return PacketSignal.UNHANDLED;
     }
 
     @Override

@@ -17,10 +17,12 @@ package dev.waterdog.waterdogpe.player;
 
 import dev.waterdog.waterdogpe.form.Form;
 import dev.waterdog.waterdogpe.network.connection.codec.compression.CompressionType;
+import dev.waterdog.waterdogpe.network.connection.handler.IReconnectHandler;
 import dev.waterdog.waterdogpe.network.connection.handler.ReconnectReason;
 import dev.waterdog.waterdogpe.network.connection.peer.BedrockServerSession;
 import dev.waterdog.waterdogpe.network.connection.client.ClientConnection;
 import dev.waterdog.waterdogpe.network.protocol.handler.PluginPacketHandler;
+import dev.waterdog.waterdogpe.network.protocol.handler.TransferCallback;
 import dev.waterdog.waterdogpe.network.protocol.handler.downstream.CompressionInitHandler;
 import dev.waterdog.waterdogpe.network.protocol.user.LoginData;
 import dev.waterdog.waterdogpe.network.protocol.user.Platform;
@@ -52,6 +54,8 @@ import org.cloudburstmc.protocol.common.util.Preconditions;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -60,6 +64,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Base Management of the Player System is done in here.
  */
 public class WaterdogPlayer implements ProxiedPlayer {
+
+    /**
+     * Hard cap on how long the async {@link PlayerLoginEvent} future may take to complete.
+     * If a plugin handler registers a CompletableFuture that never completes (e.g. a hung
+     * Redis/coroutine call), the player would otherwise be stranded forever: loginCompleted
+     * never flips, so {@link #disconnect(CharSequence)} can never evict it. The timeout
+     * guarantees the future always settles, which always releases the player.
+     */
+    private static final long LOGIN_EVENT_TIMEOUT_SECONDS = 60;
+
     private final ProxyServer proxy;
 
     @Getter
@@ -165,11 +179,19 @@ public class WaterdogPlayer implements ProxiedPlayer {
         }
 
         PlayerLoginEvent event = new PlayerLoginEvent(this);
-        this.proxy.getEventManager().callEvent(event).whenComplete((futureEvent, error) -> {
+        this.proxy.getEventManager().callEvent(event)
+                // Never let a misbehaving (hung) async login handler strand the player forever.
+                .orTimeout(LOGIN_EVENT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .whenComplete((futureEvent, error) -> {
             this.loginCompleted.set(true);
 
             if (error != null) {
-                this.getLogger().throwing(error);
+                if (error instanceof TimeoutException) {
+                    this.getLogger().warning("[{}|{}] PlayerLoginEvent did not complete within {}s, forcing disconnect",
+                            this.getAddress(), this.getName(), LOGIN_EVENT_TIMEOUT_SECONDS);
+                } else {
+                    this.getLogger().throwing(error);
+                }
                 this.disconnect(new TranslationContainer("waterdog.downstream.initial.connect"));
                 return;
             }
@@ -259,6 +281,16 @@ public class WaterdogPlayer implements ProxiedPlayer {
             return;
         }
 
+        // Deny new transfers while another one is mid-flight: starting a second transfer before the
+        // dimension change sequence completes corrupts the client state and the transfer queue.
+        TransferCallback activeTransfer = this.rewriteData.getTransferCallback();
+        if (activeTransfer != null && activeTransfer.getPhase() != TransferCallback.TransferPhase.RESET) {
+            this.sendMessage(new TranslationContainer("waterdog.downstream.connecting", activeTransfer.getTargetServer().getServerName()));
+            this.getLogger().debug("[{}] Denied transfer to {}: transfer to {} is still in progress",
+                    this.getName(), targetServer.getServerName(), activeTransfer.getTargetServer().getServerName());
+            return;
+        }
+
         this.pendingServers.add(targetServer);
 
         ClientConnection connectingServer = this.getPendingConnection();
@@ -268,12 +300,18 @@ public class WaterdogPlayer implements ProxiedPlayer {
                 this.sendMessage(new TranslationContainer("waterdog.downstream.connecting", targetServer.getServerName()));
                 return;
             } else {
+                // Clear the pending slot first so the close event reads as a deliberate discard,
+                // not as a recoverable transfer failure.
+                this.setPendingConnection(null);
                 connectingServer.disconnect();
                 this.getLogger().debug("Discarding pending connection for " + this.getName() + "! Tried to join " + targetServer.getServerName());
             }
-            this.setPendingConnection(null);
         }
 
+        this.createConnection(targetServer);
+    }
+
+    private void createConnection(ServerInfo targetServer) {
         targetServer.createConnection(this).addListener(future -> {
             ClientConnection connection = null;
             try {
@@ -284,7 +322,7 @@ public class WaterdogPlayer implements ProxiedPlayer {
                 }
             } catch (Throwable e) {
                 this.connectFailure(connection, targetServer, e);
-                this.setPendingConnection(null);
+                this.clearPendingConnection(connection);
             } finally {
                 this.pendingServers.remove(targetServer);
             }
@@ -341,14 +379,57 @@ public class WaterdogPlayer implements ProxiedPlayer {
 
         this.getLogger().error("[{}|{}] Unable to connect to downstream {}", this.getAddress(), this.getName(), targetServer.getServerName(), error);
         String exceptionMessage = Objects.requireNonNullElse(error.getLocalizedMessage(), error.getClass().getSimpleName());
-        if (this.clientConnection != null && this.clientConnection.isConnected()) {
-            this.sendMessage(new TranslationContainer("waterdog.downstream.transfer.failed", targetServer.getServerName(), exceptionMessage));
+        this.onTransferFailure(connection, targetServer, ReconnectReason.EXCEPTION, exceptionMessage);
+    }
+
+    /**
+     * Called when a connection to a new downstream server fails before StartGamePacket was received.
+     * The player is still fully connected to the previous downstream at this point, so the failure is
+     * recoverable: {@link IReconnectHandler#getTransferFailureServer} decides whether the player
+     * reconnects to another server or stays on the current one.
+     *
+     * @param connection   the failed connection, or null if it was never established
+     * @param targetServer the server that could not be reached
+     */
+    public final void onTransferFailure(ClientConnection connection, ServerInfo targetServer, ReconnectReason reason, String message) {
+        if (connection != null) {
+            // Only the current pending attempt can trigger recovery; discarded connections just die.
+            if (!this.clearPendingConnection(connection)) {
+                connection.disconnect();
+                return;
+            }
+            connection.disconnect();
+        }
+
+        if (this.disconnected.get()) {
             return;
         }
 
-        if (!this.sendToFallback(targetServer, ReconnectReason.EXCEPTION, exceptionMessage)) {
-            this.disconnect(new TranslationContainer("waterdog.downstream.transfer.failed", targetServer.getServerName(), exceptionMessage));
+        if (connection == null && this.getPendingConnection() != null) {
+            // A dial failed while a newer connection attempt is already in flight: don't stomp it.
+            this.sendMessage(new TranslationContainer("waterdog.downstream.transfer.failed", targetServer.getServerName(), message));
+            return;
         }
+
+        if (this.clientConnection == null || !this.clientConnection.isConnected()) {
+            // No healthy downstream to stay on: regular fallback behavior.
+            if (this.sendToFallback(targetServer, reason, message)) {
+                this.sendMessage(new TranslationContainer("waterdog.connected.fallback", targetServer.getServerName()));
+            } else {
+                this.disconnect(new TranslationContainer("waterdog.downstream.transfer.failed", targetServer.getServerName(), message));
+            }
+            return;
+        }
+
+        ServerInfo reconnectServer = this.proxy.getReconnectHandler().getTransferFailureServer(this, targetServer, reason, message);
+        if (reconnectServer == null || reconnectServer == this.getServerInfo()) {
+            // Stay on the previous downstream, which is still fully functional.
+            this.sendMessage(new TranslationContainer("waterdog.downstream.transfer.failed", targetServer.getServerName(), message));
+            return;
+        }
+
+        this.getLogger().debug("[{}] Transfer to {} failed: reconnecting to {}", this.getName(), targetServer.getServerName(), reconnectServer.getServerName());
+        this.connect(reconnectServer);
     }
 
     /**
@@ -440,6 +521,21 @@ public class WaterdogPlayer implements ProxiedPlayer {
     // TODO: I'm not super happy with this, but moving it to a netty handler would mean anyone who implements own handler,
     //  has to copy that piece of code. PLS: find a better place for this two methods
     public final void onDownstreamTimeout(ServerInfo serverInfo) {
+        // A timeout of the transfer target must release the transfer state before falling back.
+        TransferCallback transferCallback = this.rewriteData.getTransferCallback();
+        if (transferCallback != null && transferCallback.getTargetServer() == serverInfo
+                && transferCallback.getPhase() != TransferCallback.TransferPhase.RESET) {
+            transferCallback.onTransferFailed();
+            return;
+        }
+
+        // Timed out before START_GAME: the previous downstream still works, recover there.
+        ClientConnection pendingConnection = this.getPendingConnection();
+        if (pendingConnection != null && pendingConnection.getServerInfo() == serverInfo) {
+            this.onTransferFailure(pendingConnection, serverInfo, ReconnectReason.TIMEOUT, "Downstream Timeout");
+            return;
+        }
+
         if (!this.sendToFallback(serverInfo, ReconnectReason.TIMEOUT, "Downstream Timeout")) {
             this.disconnect(new TranslationContainer("waterdog.downstream.down", serverInfo.getServerName(), "Timeout"));
         }
@@ -449,7 +545,30 @@ public class WaterdogPlayer implements ProxiedPlayer {
         this.getLogger().info("[" + connection.getSocketAddress() + "|" + this.getName() + "] -> Downstream [" +
                 connection.getServerInfo().getServerName() + "] has disconnected");
         if (this.getPendingConnection() == connection) {
-            this.setPendingConnection(null);
+            // Pending connection died before START_GAME: the previous downstream still works,
+            // let the reconnect handler decide where the player goes.
+            this.onTransferFailure(connection, connection.getServerInfo(), ReconnectReason.UNKNOWN, "Downstream disconnected");
+            return;
+        }
+
+        // Transfer target died mid-transfer: fail the transfer so the queue and callback are
+        // released and the player is sent to a fallback.
+        TransferCallback transferCallback = this.rewriteData.getTransferCallback();
+        if (transferCallback != null && transferCallback.getConnection() == connection
+                && transferCallback.getPhase() != TransferCallback.TransferPhase.RESET) {
+            transferCallback.onTransferFailed();
+            return;
+        }
+
+        // Active downstream closed with no DisconnectPacket/timeout (those are handled in
+        // ConnectedDownstreamHandler/onDownstreamTimeout). Fail over instead of leaving the player frozen on
+        // a dead connection. Guards skip this when a transfer/disconnect is already in flight.
+        if (connection == this.clientConnection
+                && this.getPendingConnection() == null
+                && this.pendingServers.isEmpty()
+                && !this.disconnected.get()
+                && !this.sendToFallback(connection.getServerInfo(), ReconnectReason.UNKNOWN, "Downstream disconnected")) {
+            this.disconnect(new TranslationContainer("waterdog.downstream.down", connection.getServerInfo().getServerName(), "disconnected"));
         }
     }
 
@@ -852,12 +971,25 @@ public class WaterdogPlayer implements ProxiedPlayer {
         return this.clientConnection;
     }
 
-    private synchronized ClientConnection getPendingConnection() {
+    public synchronized ClientConnection getPendingConnection() {
         return this.pendingConnection;
     }
 
     private synchronized void setPendingConnection(ClientConnection connection) {
         this.pendingConnection = connection;
+    }
+
+    /**
+     * Clears the pending slot only if it is still owned by the given connection.
+     *
+     * @return true if the given connection was the pending one.
+     */
+    private synchronized boolean clearPendingConnection(ClientConnection connection) {
+        if (this.pendingConnection != connection) {
+            return false;
+        }
+        this.pendingConnection = null;
+        return true;
     }
 
     public Collection<ServerInfo> getPendingServers() {

@@ -18,6 +18,7 @@ package dev.waterdog.waterdogpe.network.protocol.handler.downstream;
 import dev.waterdog.waterdogpe.network.connection.client.ClientConnection;
 import dev.waterdog.waterdogpe.network.connection.handler.ReconnectReason;
 import dev.waterdog.waterdogpe.network.protocol.handler.PluginPacketHandler;
+import dev.waterdog.waterdogpe.network.protocol.handler.TransferCallback;
 import org.cloudburstmc.protocol.bedrock.PacketDirection;
 import org.cloudburstmc.protocol.bedrock.packet.*;
 import dev.waterdog.waterdogpe.event.defaults.FastTransferRequestEvent;
@@ -51,7 +52,20 @@ public class ConnectedDownstreamHandler extends AbstractDownstreamHandler {
 
     @Override
     public PacketSignal handle(PlayStatusPacket packet) {
-        if (!this.player.acceptPlayStatus() || packet.getStatus() != PlayStatusPacket.Status.PLAYER_SPAWN) {
+        if (packet.getStatus() != PlayStatusPacket.Status.PLAYER_SPAWN) {
+            return PacketSignal.UNHANDLED;
+        }
+
+        // A pending transfer callback finalizes itself: it sends the initialized packet and fires
+        // PostTransferCompleteEvent, so the legacy path below must not run for the same transfer.
+        TransferCallback transferCallback = this.player.getRewriteData().getTransferCallback();
+        if (transferCallback != null && transferCallback.getConnection() == this.connection) {
+            this.player.setAcceptPlayStatus(false);
+            transferCallback.onPlayStatus();
+            return PacketSignal.UNHANDLED;
+        }
+
+        if (!this.player.acceptPlayStatus()) {
             return PacketSignal.UNHANDLED;
         }
 
