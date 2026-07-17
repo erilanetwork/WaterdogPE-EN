@@ -16,6 +16,7 @@
 package dev.waterdog.waterdogpe.network.protocol.handler;
 
 import dev.waterdog.waterdogpe.event.defaults.PostTransferCompleteEvent;
+import dev.waterdog.waterdogpe.event.defaults.ServerTransferFailedEvent;
 import dev.waterdog.waterdogpe.event.defaults.TransferCompleteEvent;
 import dev.waterdog.waterdogpe.network.connection.client.ClientConnection;
 import dev.waterdog.waterdogpe.network.connection.handler.ReconnectReason;
@@ -25,6 +26,7 @@ import dev.waterdog.waterdogpe.network.protocol.handler.upstream.ConnectedUpstre
 import dev.waterdog.waterdogpe.network.serverinfo.ServerInfo;
 import dev.waterdog.waterdogpe.network.protocol.rewrite.types.RewriteData;
 import dev.waterdog.waterdogpe.player.WaterdogPlayer;
+import dev.waterdog.waterdogpe.scheduler.TaskHandler;
 import dev.waterdog.waterdogpe.utils.types.TranslationContainer;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.protocol.bedrock.packet.CameraInstructionPacket;
@@ -35,6 +37,14 @@ import static dev.waterdog.waterdogpe.network.protocol.user.PlayerRewriteUtils.*
 import static dev.waterdog.waterdogpe.network.protocol.handler.TransferCallback.TransferPhase.*;
 
 public class TransferCallback {
+
+    /**
+     * Hard cap on how long the dimension change sequence may take after StartGame claimed the
+     * transfer. Past that point the old server is gone, so a stuck client or server can only
+     * be resolved by kicking the player.
+     */
+    private static final int TRANSFER_TIMEOUT_SECONDS = 60;
+
     public enum TransferPhase {
         RESET,
         PHASE_1,
@@ -51,6 +61,7 @@ public class TransferCallback {
     private volatile TransferPhase transferPhase = PHASE_1;
     private volatile boolean finalized = false;
     private volatile boolean hasPlayStatus = false;
+    private volatile TaskHandler<?> timeoutTask;
 
     public TransferCallback(WaterdogPlayer player, ClientConnection connection, ServerInfo sourceServer, int targetDimension) {
         this.player = player;
@@ -62,6 +73,39 @@ public class TransferCallback {
 
     public void setFastTransfer(boolean fastTransfer) {
         this.fastTransfer = fastTransfer;
+    }
+
+    /**
+     * Started by the winner of the transfer claim: kicks the player if the transfer never
+     * finishes nor fails on its own.
+     */
+    public void startTimeout() {
+        this.timeoutTask = this.player.getProxy().getScheduler().scheduleDelayed(this::onTimeout, TRANSFER_TIMEOUT_SECONDS * 20);
+    }
+
+    private void cancelTimeout() {
+        TaskHandler<?> task = this.timeoutTask;
+        if (task != null) {
+            task.cancel();
+        }
+    }
+
+    private synchronized void onTimeout() {
+        if (this.finalized || !this.player.isConnected()) {
+            return;
+        }
+        // Resolve the transfer state first so the disconnect cascade does not report this
+        // as another failure.
+        TransferPhase phase = this.transferPhase;
+        this.transferPhase = RESET;
+        this.finalized = true;
+        this.player.getRewriteData().clearTransferCallback(this);
+
+        this.player.getLogger().warning("[" + this.player.getName() + "] Transfer to " + this.targetServer.getServerName()
+                + " timed out in phase " + phase + " (spawned=" + this.hasPlayStatus + ")");
+        this.player.getProxy().getEventManager().callEvent(new ServerTransferFailedEvent(
+                this.player, this.targetServer, ReconnectReason.TIMEOUT, "Transfer timed out", false));
+        this.player.disconnect(new TranslationContainer("waterdog.downstream.transfer.failed", this.targetServer.getServerName(), "Transfer timed out"));
     }
 
     public synchronized boolean onDimChangeSuccess() {
@@ -154,6 +198,7 @@ public class TransferCallback {
             return;
         }
         this.finalized = true;
+        this.cancelTimeout();
         // The callback stays registered until now so a PLAYER_SPAWN arriving after phase 2 can still
         // finalize the transfer through AbstractDownstreamHandler.
         this.player.getRewriteData().clearTransferCallback(this);
@@ -183,8 +228,12 @@ public class TransferCallback {
         // callback is active, and queued packets from the abandoned target must never reach the client.
         this.transferPhase = RESET;
         this.finalized = true; // a late PLAYER_SPAWN must not finalize a failed transfer
+        this.cancelTimeout();
         this.player.getRewriteData().clearTransferCallback(this);
         this.player.getConnection().discardTransferQueue();
+
+        this.player.getProxy().getEventManager().callEvent(new ServerTransferFailedEvent(
+                this.player, this.targetServer, ReconnectReason.TRANSFER_FAILED, reason, false));
 
         if (!this.player.sendToFallback(this.targetServer, ReconnectReason.TRANSFER_FAILED, reason)) {
             this.player.disconnect(new TranslationContainer("waterdog.downstream.transfer.failed", targetServer.getServerName(), reason));

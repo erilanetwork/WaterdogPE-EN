@@ -43,6 +43,10 @@ public class RewriteData {
     private List<GameRuleData<?>> gameRules;
     private int dimension = 0;
     private volatile TransferCallback transferCallback;
+    /**
+     * Captured from the first StartGamePacket: settings the client can not change without a reconnect.
+     */
+    private StartGameSettings startGameSettings;
     private Vector3f spawnPosition;
     private Vector2f rotation;
     private boolean immobileFlag;
@@ -88,6 +92,8 @@ public class RewriteData {
             this.transferCallback = null;
         }
     }
+    public StartGameSettings getStartGameSettings() { return startGameSettings; }
+    public void setStartGameSettings(StartGameSettings startGameSettings) { this.startGameSettings = startGameSettings; }
     public Vector3f getSpawnPosition() { return spawnPosition; }
     public void setSpawnPosition(Vector3f spawnPosition) { this.spawnPosition = spawnPosition; }
     public Vector2f getRotation() { return rotation; }
@@ -100,33 +106,6 @@ public class RewriteData {
 
     public RewriteData() {
         this.proxyName = ProxyServer.getInstance().getConfiguration().getName();
-    }
-
-    /**
-     * Atomically claims the transfer slot. Downstream connections run on different event loops,
-     * so two of them can reach START_GAME concurrently and only one may win.
-     *
-     * @return false if another transfer is still in progress.
-     */
-    public synchronized boolean trySetTransferCallback(TransferCallback callback) {
-        if (this.transferCallback != null && this.transferCallback.getPhase() != TransferCallback.TransferPhase.RESET) {
-            return false;
-        }
-        this.transferCallback = callback;
-        return true;
-    }
-
-    /**
-     * Clears the transfer slot only if it is still owned by the given callback.
-     */
-    public synchronized void clearTransferCallback(TransferCallback callback) {
-        if (this.transferCallback == callback) {
-            this.transferCallback = null;
-        }
-    }
-
-    public synchronized void setTransferCallback(TransferCallback callback) {
-        this.transferCallback = callback;
     }
 
     public boolean hasImmobileFlag() {
