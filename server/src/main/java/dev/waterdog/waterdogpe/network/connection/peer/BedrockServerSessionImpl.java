@@ -27,6 +27,7 @@ import org.cloudburstmc.protocol.bedrock.BedrockDisconnectReasons;
 import org.cloudburstmc.protocol.bedrock.BedrockPeer;
 import org.cloudburstmc.protocol.bedrock.BedrockSession;
 import org.cloudburstmc.protocol.bedrock.PacketDirection;
+import org.cloudburstmc.protocol.bedrock.data.DisconnectFailReason;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockBatchWrapper;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket;
@@ -84,12 +85,19 @@ public class BedrockServerSessionImpl extends BedrockSession implements BedrockS
         this.checkForClosed();
 
         DisconnectPacket packet = new DisconnectPacket();
+        CharSequence effectiveReason;
         if (reason == null || hideReason) {
             packet.setMessageSkipped(true);
-            reason = BedrockDisconnectReasons.DISCONNECTED;
+            effectiveReason = BedrockDisconnectReasons.DISCONNECTED;
+        } else {
+            effectiveReason = reason;
         }
-        packet.setKickMessage(reason);
+        packet.setKickMessage(effectiveReason);
+        packet.setReason(DisconnectFailReason.DISCONNECTED);
         this.sendPacketImmediately(packet);
+        if (!isSubClient()) {
+            this.getPeer().blackholeAndCloseLater(effectiveReason);
+        }
     }
 
     public void setTransferQueueActive(boolean enable) {
