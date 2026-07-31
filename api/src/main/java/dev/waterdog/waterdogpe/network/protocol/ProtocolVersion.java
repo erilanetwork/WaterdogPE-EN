@@ -22,6 +22,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec;
 import org.cloudburstmc.protocol.bedrock.codec.v1001.Bedrock_v1001;
+import org.cloudburstmc.protocol.bedrock.codec.v2168.Bedrock_v2168;
 import org.cloudburstmc.protocol.bedrock.codec.v313.Bedrock_v313;
 import org.cloudburstmc.protocol.bedrock.codec.v332.Bedrock_v332;
 import org.cloudburstmc.protocol.bedrock.codec.v340.Bedrock_v340;
@@ -147,7 +148,8 @@ public enum ProtocolVersion {
     MINECRAFT_PE_1_26_0(924, Bedrock_v924.CODEC),
     MINECRAFT_PE_1_26_10(944, Bedrock_v944.CODEC),
     MINECRAFT_PE_1_26_20(975, Bedrock_v975.CODEC),
-    MINECRAFT_PE_1_26_30(1001, Bedrock_v1001.CODEC)
+    MINECRAFT_PE_1_26_30(1001, Bedrock_v1001.CODEC),
+    MINECRAFT_PE_1_26_40(2168, Bedrock_v2168.CODEC)
     ;
 
     private static final ProtocolVersion[] VALUES = values();
