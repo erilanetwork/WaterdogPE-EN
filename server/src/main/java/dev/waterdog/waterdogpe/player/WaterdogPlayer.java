@@ -654,6 +654,18 @@ public class WaterdogPlayer implements ProxiedPlayer {
     }
 
     /**
+     * Clears the action bar of the player
+     */
+    public void clearActionBar() {
+        SetTitlePacket packet = new SetTitlePacket();
+        packet.setType(SetTitlePacket.Type.ACTIONBAR);
+        packet.setText("");
+        packet.setXuid(this.getXuid());
+        packet.setPlatformOnlineId("");
+        this.sendPacket(packet);
+    }
+
+    /**
      * Resets all currently applied title settings
      */
     public void resetTitleSettings() {
