@@ -114,26 +114,14 @@ public class InitialHandler extends AbstractDownstreamHandler {
         packet.setLevelName(rewriteData.getProxyName());
         packet.setServerEngine("Erila Network Proxy v1.0.0");
 
-        // Starting with 419 server does not send vanilla blocks to client
-        if (this.player.getProtocol().isBeforeOrEqual(ProtocolVersion.MINECRAFT_PE_1_16_20)) {
-            BlockPalette palette = BlockPalette.getPalette(packet.getBlockPalette(), this.player.getProtocol());
-            rewriteData.setBlockPalette(palette);
-            rewriteData.setBlockPaletteRewrite(palette.createRewrite(palette));
-            this.player.getRewriteMaps().setBlockMap(new BlockMap(this.player));
-        } else {
-            rewriteData.setBlockProperties(packet.getBlockProperties());
-            this.player.getRewriteMaps().setBlockMap(new BlockMapSimple(this.player));
-        }
+        rewriteData.setBlockProperties(packet.getBlockProperties());
+        this.player.getRewriteMaps().setBlockMap(new BlockMapSimple(this.player));
 
         BedrockCodecHelper codecHelper = this.player.getConnection()
                 .getPeer()
                 .getCodecHelper();
         // Setup block and item registries
         codecHelper.setBlockDefinitions(FakeDefinitionRegistry.createBlockRegistry());
-        // Setup item registry. After 1.21.60 these are sent with ItemComponentPacket instead.
-        if (this.player.getProtocol().isBeforeOrEqual(ProtocolVersion.MINECRAFT_PE_1_21_50)) {
-            setItemDefinitions(packet.getItemDefinitions());
-        }
         // Enable runtimeId rewrite
         this.player.setCanRewrite(true);
 

@@ -373,12 +373,7 @@ public class WaterdogPlayer implements ProxiedPlayer {
             handler = new SwitchDownstreamHandler(this, connection);
         }
 
-        if (this.getProtocol().isAfterOrEqual(ProtocolVersion.MINECRAFT_PE_1_19_30)) {
-            connection.setPacketHandler(new CompressionInitHandler(this, connection, handler));
-        } else {
-            connection.setPacketHandler(handler);
-            connection.sendPacket(this.loginData.getLoginPacket());
-        }
+        connection.setPacketHandler(new CompressionInitHandler(this, connection, handler));
 
         this.getLogger().info("[{}|{}] -> Downstream [{}] has connected", connection.getSocketAddress(), this.getName(), targetServer.getServerName());
     }
@@ -861,10 +856,6 @@ public class WaterdogPlayer implements ProxiedPlayer {
      * @param content the message content
      */
     public void sendToastMessage(String title, String content) {
-        if (this.getProtocol().isBefore(ProtocolVersion.MINECRAFT_PE_1_19_0)) {
-            return;
-        }
-
         ToastRequestPacket packet = new ToastRequestPacket();
         packet.setTitle(title);
         packet.setContent(content);

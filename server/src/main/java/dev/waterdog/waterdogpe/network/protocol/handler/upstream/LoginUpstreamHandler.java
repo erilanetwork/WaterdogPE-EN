@@ -103,12 +103,6 @@ public class LoginUpstreamHandler implements BedrockPacketHandler {
 
         this.session.setCodec(protocol.getCodec());
 
-        if (protocol.isBefore(ProtocolVersion.MINECRAFT_PE_1_19_30)) {
-            this.session.disconnect("Illegal packet");
-            this.proxy.getLogger().warning("[{}] <-> Upstream has requested network settings, but its version doesn't support it (protocol={})", this.session.getSocketAddress(), protocol.getProtocol());
-            return PacketSignal.HANDLED;
-        }
-
         this.compression = this.proxy.getConfiguration().getCompression();
 
         NetworkSettingsPacket settingsPacket = new NetworkSettingsPacket();
@@ -134,12 +128,10 @@ public class LoginUpstreamHandler implements BedrockPacketHandler {
             ((dev.waterdog.waterdogpe.network.connection.peer.ProxiedBedrockPeer) this.session.getPeer()).setProtocol(protocol);
         }
 
-        if (protocol.isAfterOrEqual(ProtocolVersion.MINECRAFT_PE_1_19_30) && this.compression == null) {
+        if (this.compression == null) {
             this.proxy.getLogger().warning("[{}] <-> Upstream has not requested network settings (protocol={})", this.session.getSocketAddress(), protocol.getProtocol());
             this.session.disconnect("Wrong login flow");
             return PacketSignal.HANDLED;
-        } else if (this.compression == null) {
-            this.compression = CompressionType.ZLIB;
         }
 
         HandshakeEntry handshakeEntry = null;
@@ -155,13 +147,6 @@ public class LoginUpstreamHandler implements BedrockPacketHandler {
                 this.onLoginFailed(handshakeEntry, null, "disconnectionScreen.notAuthenticated");
                 this.proxy.getLogger().info("[{}|{}] <-> Upstream has disconnected due to failed XBOX authentication!", this.session.getSocketAddress(), handshakeEntry.getDisplayName());
                 return PacketSignal.HANDLED;
-            }
-
-            // Thank you Mojang: this version includes protocol changes, but protocol version was not increased.
-            if (protocol.equals(ProtocolVersion.MINECRAFT_PE_1_19_60) && handshakeEntry.getClientData().has("GameVersion") &&
-                    ProtocolVersion.MINECRAFT_PE_1_19_62.getMinecraftVersion().equals(handshakeEntry.getClientData().get("GameVersion").getAsString())) {
-                handshakeEntry.setProtocol(protocol = ProtocolVersion.MINECRAFT_PE_1_19_62);
-                ((dev.waterdog.waterdogpe.network.connection.peer.ProxiedBedrockPeer) this.session.getPeer()).setProtocol(protocol);
             }
 
             this.proxy.getLogger().info("[{}|{}] <-> Upstream has connected (protocol={} version={})", this.session.getSocketAddress(), handshakeEntry.getDisplayName(),

@@ -130,9 +130,7 @@ public class TransferCallback {
         injectEntityImmobile(this.player.getConnection(), rewriteData.getEntityId(), true);
 
         Vector3f fakePosition = rewriteData.getSpawnPosition().add(-2000, 0, -2000);
-        if (this.player.getProtocol().isAfterOrEqual(ProtocolVersion.MINECRAFT_PE_1_19_50)) {
-            injectInputLocks(this.player.getConnection(), INPUT_LOCK_FREEZE, fakePosition);
-        }
+        injectInputLocks(this.player.getConnection(), INPUT_LOCK_FREEZE, fakePosition);
 
         if (rewriteData.getDimension() != this.targetDimension) {
             injectPosition(this.player.getConnection(), fakePosition, rewriteData.getRotation(), rewriteData.getEntityId());
@@ -169,9 +167,7 @@ public class TransferCallback {
         if (!rewriteData.hasImmobileFlag()) {
             injectEntityImmobile(this.player.getConnection(), rewriteData.getEntityId(), false);
         }
-        if (this.player.getProtocol().isAfterOrEqual(ProtocolVersion.MINECRAFT_PE_1_19_50)) {
-            injectInputLocks(this.player.getConnection(), 0, rewriteData.getSpawnPosition());
-        }
+        injectInputLocks(this.player.getConnection(), 0, rewriteData.getSpawnPosition());
         this.connection.setPacketHandler(new ConnectedDownstreamHandler(player, this.connection));
 
         if (this.fastTransfer) {

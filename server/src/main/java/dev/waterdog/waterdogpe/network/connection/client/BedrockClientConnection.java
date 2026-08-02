@@ -69,10 +69,6 @@ public class BedrockClientConnection extends SimpleChannelInboundHandler<Bedrock
         this.player = player;
         this.serverInfo = serverInfo;
         this.channel = channel;
-        if (player.getProtocol().isBefore(ProtocolVersion.MINECRAFT_PE_1_19_30)) {
-            this.compressionStrategy = ((dev.waterdog.waterdogpe.network.connection.peer.BedrockServerSession) player.getConnection()).getPeer().getRakVersion() < 10 ?
-                    ProxiedSessionInitializer.ZLIB_STRATEGY : ProxiedSessionInitializer.ZLIB_RAW_STRATEGY;
-        }
     }
 
     @Override
@@ -96,10 +92,6 @@ public class BedrockClientConnection extends SimpleChannelInboundHandler<Bedrock
 
     @Override
     public void sendPacket(BedrockBatchWrapper wrapper) {
-        if (this.player.getProtocol().isBefore(ProtocolVersion.MINECRAFT_PE_1_20_60) &&
-                !Objects.equals(wrapper.getAlgorithm(), this.compressionStrategy.getDefaultCompression().getAlgorithm())) {
-            wrapper.setCompressed(null); // Before 1.20.60 dynamic compression is not supported
-        }
         // Starting with 1.20.60 support all compression algorithms on server side.
         this.channel.writeAndFlush(wrapper);
     }
@@ -127,7 +119,7 @@ public class BedrockClientConnection extends SimpleChannelInboundHandler<Bedrock
 
     @Override
     public void setCompressionStrategy(CompressionStrategy strategy) {
-        boolean needsPrefix = this.player.getProtocol().isAfterOrEqual(ProtocolVersion.MINECRAFT_PE_1_20_60);
+        boolean needsPrefix = true;
 
         ChannelHandler handler = this.channel.pipeline().get(CompressionCodec.NAME);
         if (handler == null) {

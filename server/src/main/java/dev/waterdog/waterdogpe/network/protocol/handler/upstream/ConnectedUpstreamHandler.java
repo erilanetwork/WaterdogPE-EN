@@ -164,9 +164,6 @@ public class ConnectedUpstreamHandler extends AbstractUpstreamHandler implements
 
     @Override
     public PacketSignal handle(ClientCacheBlobStatusPacket packet) {
-        if (this.player.getProtocol().isBefore(ProtocolVersion.MINECRAFT_PE_1_18_30)) {
-            this.player.getChunkBlobs().addAll(packet.getNaks());
-        }
         return PacketSignal.UNHANDLED;
     }
 

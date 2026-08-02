@@ -215,7 +215,7 @@ public class PlayerRewriteUtils {
             return;
         }
 
-        int effectsCount = version.isAfter(ProtocolVersion.MINECRAFT_PE_1_19_0) ? 30 : 28;
+        int effectsCount = version.isAfter(ProtocolVersion.MINECRAFT_PE_1_21_130) ? 30 : 28;
         for (int i = 0; i < effectsCount; i++) {
             injectRemoveEntityEffect(session, runtimeId, i);
         }
@@ -306,7 +306,7 @@ public class PlayerRewriteUtils {
             injectEmptyChunks(session, position, 3, dimensionId, version, requestSubChunks);
         }
 
-        if (version.isAfterOrEqual(ProtocolVersion.MINECRAFT_PE_1_19_50)) {
+        if (version.isAfterOrEqual(ProtocolVersion.MINECRAFT_PE_1_21_130)) {
             // The game does for some unknown reason expect client dim change ACK
             // to be sent from server in order to fully finish the transfer
             PlayerActionPacket actionPacket = new PlayerActionPacket();
@@ -342,7 +342,7 @@ public class PlayerRewriteUtils {
         packet.setCachingEnabled(false);
         packet.setDimension(dimension);
         // Request mode is only serializable since 1.18.30 (v486 codec); older codecs ignore the flag
-        if (requestSubChunks && version.isAfterOrEqual(ProtocolVersion.MINECRAFT_PE_1_18_30)) {
+        if (requestSubChunks && version.isAfterOrEqual(ProtocolVersion.MINECRAFT_PE_1_21_130)) {
             packet.setRequestSubChunks(true);
             packet.setSubChunkLimit(switch (dimension) {
                 case DIMENSION_NETHER -> 7;
@@ -350,16 +350,13 @@ public class PlayerRewriteUtils {
                 default -> 23;
             });
             packet.setData(Unpooled.EMPTY_BUFFER);
-        } else if (version.isAfterOrEqual(ProtocolVersion.MINECRAFT_PE_1_18_30)) {
+        } else if (version.isAfterOrEqual(ProtocolVersion.MINECRAFT_PE_1_21_130)) {
             packet.setSubChunksLength(1);
             switch (dimension) {
                 case DIMENSION_NETHER -> packet.setData(fakeChunkDataNether.retainedSlice());
                 case DIMENSION_END -> packet.setData(fakeChunkDataEnd.retainedSlice());
                 default -> packet.setData(fakeChunkDataOverworld.retainedSlice());
             }
-        } else if (version.isAfterOrEqual(ProtocolVersion.MINECRAFT_PE_1_18_0)) {
-            packet.setSubChunksLength(1);
-            packet.setData(fakeChunkDataBlameMojang.retainedSlice());
         } else {
             packet.setData(Unpooled.wrappedBuffer(new byte[257]));
         }

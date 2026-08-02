@@ -112,12 +112,7 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
         rewriteData.setSpawnPosition(packet.getPlayerPosition());
         rewriteData.setRotation(packet.getRotation());
 
-        if (this.player.getProtocol().isBeforeOrEqual(ProtocolVersion.MINECRAFT_PE_1_16_20)) {
-            BlockPalette palette = BlockPalette.getPalette(packet.getBlockPalette(), this.player.getProtocol());
-            rewriteData.setBlockPaletteRewrite(palette.createRewrite(rewriteData.getBlockPalette()));
-        } else {
-            rewriteData.setBlockProperties(packet.getBlockProperties());
-        }
+        rewriteData.setBlockProperties(packet.getBlockProperties());
 
         if (!this.player.isConnected()) {
             this.connection.disconnect();
@@ -166,11 +161,6 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
         ServerTransferEvent event = new ServerTransferEvent(this.player, oldConnection.getServerInfo(), this.connection.getServerInfo());
         this.player.getProxy().getEventManager().callEvent(event);
 
-        LongSet blobs = this.player.getChunkBlobs();
-        if (this.player.getProtocol().isBefore(ProtocolVersion.MINECRAFT_PE_1_18_30) &&
-                this.player.getLoginData().getCachePacket().isSupported() && !blobs.isEmpty()) {
-            injectChunkCacheBlobs(this.player.getConnection(), blobs);
-        }
         this.player.getChunkBlobs().clear();
 
         Long2LongMap entityLinks = this.player.getEntityLinks();

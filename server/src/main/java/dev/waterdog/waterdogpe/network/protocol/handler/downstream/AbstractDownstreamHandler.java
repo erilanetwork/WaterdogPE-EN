@@ -70,9 +70,7 @@ public abstract class AbstractDownstreamHandler implements ProxyPacketHandler {
             return Signals.CANCEL;
         }
         player.setAcceptItemComponentPacket(false);
-        if (this.player.getProtocol().isAfterOrEqual(ProtocolVersion.MINECRAFT_PE_1_21_60)) {
-            setItemDefinitions(packet.getItems());
-        }
+        setItemDefinitions(packet.getItems());
         return PacketSignal.UNHANDLED;
     }
 
@@ -164,9 +162,6 @@ public abstract class AbstractDownstreamHandler implements ProxyPacketHandler {
 
     @Override
     public PacketSignal handle(ClientCacheMissResponsePacket packet) {
-        if (this.player.getProtocol().isBefore(ProtocolVersion.MINECRAFT_PE_1_18_30)) {
-            this.player.getChunkBlobs().removeAll(packet.getBlobs().keySet());
-        }
         return PacketSignal.UNHANDLED;
     }
 
@@ -180,9 +175,7 @@ public abstract class AbstractDownstreamHandler implements ProxyPacketHandler {
         String message;
         switch (packet.getStatus()) {
             case LOGIN_SUCCESS -> {
-                if (this.player.getProtocol().isAfterOrEqual(ProtocolVersion.MINECRAFT_PE_1_12)) {
-                    connection.sendPacket(this.player.getLoginData().getCachePacket());
-                }
+                connection.sendPacket(this.player.getLoginData().getCachePacket());
                 return Signals.CANCEL;
             }
             case LOGIN_FAILED_CLIENT_OLD, LOGIN_FAILED_SERVER_OLD -> message = "Incompatible version";
