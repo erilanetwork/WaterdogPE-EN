@@ -16,11 +16,10 @@
 package dev.waterdog.waterdogpe.network.connection.codec.packet;
 
 import dev.waterdog.waterdogpe.network.NetworkMetrics;
+import dev.waterdog.waterdogpe.network.protocol.registry.FakeDefinitionRegistry;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageCodec;
-import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
 import org.cloudburstmc.protocol.bedrock.PacketDirection;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodecHelper;
@@ -41,7 +40,22 @@ public abstract class BedrockPacketCodec extends MessageToMessageCodec<BedrockBa
     public static final String NAME = "bedrock-packet-codec";
 
     private BedrockCodec codec = BedrockCompat.CODEC;
-    private BedrockCodecHelper helper = codec.createHelper();
+    private BedrockCodecHelper helper = createDefaultHelper(codec);
+
+    private static BedrockCodecHelper createDefaultHelper(BedrockCodec codec) {
+        BedrockCodecHelper helper = codec.createHelper();
+        applyFallbackRegistries(helper);
+        return helper;
+    }
+
+    private static void applyFallbackRegistries(BedrockCodecHelper helper) {
+        if (helper.getBlockDefinitions() == null) {
+            helper.setBlockDefinitions(FakeDefinitionRegistry.createBlockRegistry());
+        }
+        if (helper.getItemDefinitions() == null) {
+            helper.setItemDefinitions(FakeDefinitionRegistry.createItemRegistry());
+        }
+    }
 
     public BedrockCodec getCodec() { return codec; }
     public BedrockCodecHelper getHelper() { return helper; }
@@ -159,6 +173,7 @@ public abstract class BedrockPacketCodec extends MessageToMessageCodec<BedrockBa
     public final BedrockPacketCodec setCodecHelper(BedrockCodec codec, BedrockCodecHelper helper) {
         this.codec = requireNonNull(codec, "Codec cannot be null");
         this.helper = requireNonNull(helper, "Helper can not be null");
+        applyFallbackRegistries(this.helper);
 
         switch (this.inboundRecipient) {
             case CLIENT -> this.helper.setEncodingSettings(EncodingSettings.UNLIMITED); // we trust downstream
