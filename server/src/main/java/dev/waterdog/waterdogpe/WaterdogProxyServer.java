@@ -33,6 +33,7 @@ import dev.waterdog.waterdogpe.network.connection.handler.DefaultForcedHostHandl
 import dev.waterdog.waterdogpe.network.connection.handler.IForcedHostHandler;
 import dev.waterdog.waterdogpe.network.connection.handler.IJoinHandler;
 import dev.waterdog.waterdogpe.network.connection.handler.IReconnectHandler;
+import dev.waterdog.waterdogpe.network.protocol.PersonaPieceTypePatch;
 import dev.waterdog.waterdogpe.network.protocol.ProtocolCodecs;
 import dev.waterdog.waterdogpe.network.protocol.ProtocolVersion;
 import dev.waterdog.waterdogpe.network.protocol.updaters.CodecUpdaterCommands;
@@ -236,6 +237,7 @@ public class WaterdogProxyServer implements ProxyServer {
     }
 
     private void boot() {
+        PersonaPieceTypePatch.apply();
         this.console.getConsoleThread().start();
         this.pluginManager.enableAllPlugins();
         if (Boolean.parseBoolean(System.getProperty("disableFastCodec", "false"))) {
