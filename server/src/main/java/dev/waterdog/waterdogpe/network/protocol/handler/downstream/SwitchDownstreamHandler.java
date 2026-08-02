@@ -129,8 +129,7 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
         // may already be in flight, drop it before it hijacks the player.
         if (this.player.getPendingConnection() != this.connection) {
             this.connection.disconnect();
-            log.warn("[{}] Aborted server transfer to {} because the connection was discarded!",
-                    this.player.getName(), this.connection.getServerInfo().getServerName());
+            logger.warning("[{}] Aborted server transfer to {} because the connection was discarded!", this.player.getName(), this.connection.getServerInfo().getServerName());
             return Signals.CANCEL;
         }
 
@@ -139,8 +138,7 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
         StartGameSettings startGameSettings = rewriteData.getStartGameSettings();
         String incompatibilities = startGameSettings == null ? null : startGameSettings.findIncompatibilities(packet);
         if (incompatibilities != null) {
-            log.warn("[{}] Aborted server transfer to {} due to incompatible StartGame settings: {}",
-                    this.player.getName(), this.connection.getServerInfo().getServerName(), incompatibilities);
+            logger.warning("[{}] Aborted server transfer to {} due to incompatible StartGame settings: {}", this.player.getName(), this.connection.getServerInfo().getServerName(), incompatibilities);
             this.player.onTransferFailure(this.connection, this.connection.getServerInfo(),
                     ReconnectReason.INCOMPATIBLE, "Incompatible server settings");
             return Signals.CANCEL;

@@ -28,6 +28,7 @@ import dev.waterdog.waterdogpe.network.connection.codec.compression.ProxiedCompr
 import dev.waterdog.waterdogpe.network.connection.codec.packet.BedrockPacketCodec;
 import dev.waterdog.waterdogpe.network.serverinfo.ServerInfo;
 import dev.waterdog.waterdogpe.player.ProxiedPlayer;
+import dev.waterdog.waterdogpe.player.WaterdogPlayer;
 import io.netty.channel.*;
 import io.netty.util.concurrent.Promise;
 import lombok.RequiredArgsConstructor;
@@ -40,12 +41,12 @@ import org.cloudburstmc.protocol.bedrock.netty.codec.compression.CompressionCode
 import static dev.waterdog.waterdogpe.network.connection.codec.initializer.ProxiedSessionInitializer.*;
 
 public class ProxiedClientSessionInitializer extends ChannelInitializer<Channel> {
-    private final ProxiedPlayer player;
+    private final WaterdogPlayer player;
     private final ServerInfo serverInfo;
     private final Promise<ClientConnection> promise;
 
     public ProxiedClientSessionInitializer(ProxiedPlayer player, ServerInfo serverInfo, Promise<ClientConnection> promise) {
-        this.player = player;
+        this.player = (WaterdogPlayer) player;
         this.serverInfo = serverInfo;
         this.promise = promise;
     }

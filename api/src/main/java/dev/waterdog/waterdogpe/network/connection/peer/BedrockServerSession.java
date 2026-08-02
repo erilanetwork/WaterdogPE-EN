@@ -18,6 +18,8 @@ public interface BedrockServerSession extends ProxiedConnection {
 
     void setTransferQueueActive(boolean enable);
 
+    void discardTransferQueue();
+
     int getSubClientId();
 
     BedrockPeer getPeer();

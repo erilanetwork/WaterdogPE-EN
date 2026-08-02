@@ -1,7 +1,7 @@
 dependencies {
-    api("org.cloudburstmc.protocol:bedrock-codec:3.0.0.Beta12-SNAPSHOT")
+    api("org.cloudburstmc.protocol:bedrock-codec:3.0.0.Beta13-SNAPSHOT")
     api("io.netty:netty-buffer:4.1.94.Final")
-    api("org.cloudburstmc.protocol:bedrock-connection:3.0.0.Beta12-SNAPSHOT")
+    api("org.cloudburstmc.protocol:bedrock-connection:3.0.0.Beta13-SNAPSHOT")
     api("com.nimbusds:nimbus-jose-jwt:9.37.4")
     api("it.unimi.dsi:fastutil:8.5.12")
     api("com.google.code.gson:gson:2.10.1")

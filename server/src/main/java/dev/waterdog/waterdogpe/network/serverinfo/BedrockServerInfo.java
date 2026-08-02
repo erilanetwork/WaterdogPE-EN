@@ -84,7 +84,7 @@ public class BedrockServerInfo extends AbstractServerInfo implements ServerInfo 
         new Bootstrap()
                 .channelFactory(RakChannelFactory.client(EventLoops.getChannelType().getDatagramChannel()))
                 .group(eventLoop)
-                .option(RakChannelOption.RAK_GUID, RakNetInterface.createRandomGUID())
+                .option(RakChannelOption.RAK_GUID, WaterdogProxyServer.createRandomGUID())
                 .handler(new ClientPingHandler(promise, timeout, timeUnit))
                 .bind(0)
                 .addListener((ChannelFuture future) -> {

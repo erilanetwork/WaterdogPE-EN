@@ -19,8 +19,8 @@ dependencies {
         exclude(group = "org.jline", module = "jline-terminal-jna")
         exclude(group = "org.jline", module = "jline-terminal")
     }
-    implementation("org.cloudburstmc.protocol:bedrock-connection:3.0.0.Beta12-SNAPSHOT")
-    implementation("org.cloudburstmc.netty:netty-transport-raknet:1.0.0.CR3-20260421.213623-35")
+    implementation("org.cloudburstmc.protocol:bedrock-connection:3.0.0.Beta13-SNAPSHOT")
+    implementation("org.cloudburstmc.netty:netty-transport-raknet:1.1.0.CR1-SNAPSHOT")
     implementation("io.netty:netty-transport-native-epoll:4.1.101.Final:linux-x86_64")
     implementation("io.netty:netty-transport-native-kqueue:4.1.101.Final:osx-x86_64")
     implementation("com.nimbusds:nimbus-jose-jwt:9.37.4")

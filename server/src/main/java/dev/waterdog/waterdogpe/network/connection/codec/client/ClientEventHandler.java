@@ -18,7 +18,7 @@ package dev.waterdog.waterdogpe.network.connection.codec.client;
 import dev.waterdog.waterdogpe.network.connection.client.ClientConnection;
 import dev.waterdog.waterdogpe.network.connection.handler.ReconnectReason;
 import dev.waterdog.waterdogpe.network.protocol.handler.TransferCallback;
-import dev.waterdog.waterdogpe.player.ProxiedPlayer;
+import dev.waterdog.waterdogpe.player.WaterdogPlayer;
 import dev.waterdog.waterdogpe.utils.types.TranslationContainer;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -27,10 +27,10 @@ import org.cloudburstmc.netty.channel.raknet.RakDisconnectReason;
 public class ClientEventHandler extends ChannelInboundHandlerAdapter {
     public static final String NAME = "client-event-handler";
 
-    private final ProxiedPlayer player;
+    private final WaterdogPlayer player;
     private final ClientConnection connection;
 
-    public ClientEventHandler(ProxiedPlayer player, ClientConnection connection) {
+    public ClientEventHandler(WaterdogPlayer player, ClientConnection connection) {
         this.player = player;
         this.connection = connection;
     }
