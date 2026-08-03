@@ -156,7 +156,7 @@ public class WaterdogPackManager implements dev.waterdog.waterdogpe.packs.PackMa
 
     public void rebuildPackets() {
         this.packsInfoPacket.setForcedToAccept(this.proxy.getConfiguration().isForceServerPacks());
-        this.packsInfoPacket.setWorldTemplateId(UUID.randomUUID());
+        this.packsInfoPacket.setWorldTemplateId(new UUID(0L, 0L));
         this.packsInfoPacket.setWorldTemplateVersion("");
         this.stackPacket.setForcedToAccept(this.proxy.getConfiguration().isOverwriteClientPacks());
 
@@ -166,7 +166,7 @@ public class WaterdogPackManager implements dev.waterdog.waterdogpe.packs.PackMa
         this.stackPacket.getBehaviorPacks().clear();
         this.stackPacket.getResourcePacks().clear();
 
-        this.stackPacket.setGameVersion("");
+        this.stackPacket.setGameVersion("*");
 
         for (ResourcePack pack : this.packs.values()) {
             ResourcePacksInfoPacket.Entry infoEntry = new ResourcePacksInfoPacket.Entry(pack.getPackId(), pack.getVersion().toString(),
