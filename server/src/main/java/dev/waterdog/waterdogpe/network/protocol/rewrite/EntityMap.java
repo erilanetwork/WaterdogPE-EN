@@ -268,6 +268,7 @@ public class EntityMap implements BedrockPacketHandler {
         return signal;
     }
 
+
     @Override
     public PacketSignal handle(UpdateTradePacket packet) {
         PacketSignal signal0 = rewriteId(packet.getPlayerUniqueEntityId(), packet::setPlayerUniqueEntityId);
