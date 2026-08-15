@@ -149,6 +149,13 @@ public class LoginUpstreamHandler implements BedrockPacketHandler {
                 return PacketSignal.HANDLED;
             }
 
+            // BLAMEMOJANG: these versions includes protocol changes, but protocol version was not increased.
+            if (protocol.equals(ProtocolVersion.MINECRAFT_PE_1_26_40) && handshakeEntry.getClientData().has("GameVersion") &&
+                    ProtocolVersion.MINECRAFT_PE_1_26_44.getMinecraftVersion().equals(handshakeEntry.getClientData().get("GameVersion").getAsString())) {
+                handshakeEntry.setProtocol(protocol = ProtocolVersion.MINECRAFT_PE_1_26_44);
+                ((dev.waterdog.waterdogpe.network.connection.peer.ProxiedBedrockPeer) this.session.getPeer()).setProtocol(protocol);
+            }
+
             this.proxy.getLogger().info("[{}|{}] <-> Upstream has connected (protocol={} version={})", this.session.getSocketAddress(), handshakeEntry.getDisplayName(),
                     protocol.getProtocol(), protocol.getMinecraftVersion());
 

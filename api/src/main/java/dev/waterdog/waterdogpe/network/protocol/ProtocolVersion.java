@@ -17,6 +17,7 @@ package dev.waterdog.waterdogpe.network.protocol;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -58,15 +59,18 @@ public enum ProtocolVersion {
     private final BedrockCodec defaultCodec;
     @Setter
     private BedrockCodec bedrockCodec;
+    @Getter
+    private final ObjectImmutableList<String> displayNames;
 
-    ProtocolVersion(int protocol, BedrockCodec codec) {
-        this(protocol, protocol, codec);
+    ProtocolVersion(int protocol, BedrockCodec codec, String... displayNames) {
+        this(protocol, protocol, codec, displayNames);
     }
 
-    ProtocolVersion(int protocol, int protocolInternal, BedrockCodec codec) {
+    ProtocolVersion(int protocol, int protocolInternal, BedrockCodec codec, String... displayNames) {
         this.protocol = protocol;
         this.protocolInternal = protocolInternal;
         this.defaultCodec = codec;
+        this.displayNames = new ObjectImmutableList<>(displayNames);
     }
 
     public boolean isBefore(ProtocolVersion version) {

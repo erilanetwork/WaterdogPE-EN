@@ -10,7 +10,6 @@ allprojects {
     version = "2.0.4-SNAPSHOT"
 
     repositories {
-        mavenLocal()
         mavenCentral()
         maven { url = uri("https://repo.opencollab.dev/maven-releases/") }
         maven { url = uri("https://repo.opencollab.dev/maven-snapshots/") }
