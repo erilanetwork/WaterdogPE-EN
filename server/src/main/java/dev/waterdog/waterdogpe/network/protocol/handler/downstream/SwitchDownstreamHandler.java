@@ -208,6 +208,13 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
 
         this.connection.sendPacket(this.player.getLoginData().getChunkRadius());
 
+        // A transferred client never sends this packet again, it only does so on its very first spawn.
+        // A downstream that treats it as the end of the spawn sequence therefore waits for it forever
+        // and never puts the player into its world, so send it on the client's behalf.
+        SetLocalPlayerAsInitializedPacket initialized = new SetLocalPlayerAsInitializedPacket();
+        initialized.setRuntimeEntityId(packet.getRuntimeEntityId());
+        this.connection.sendPacket(initialized);
+
         // Client does not accept ChangeDimensionPacket when dimension is same as current dimension.
         // If we transfer between same dimensions we are attempting to do dimension change sequence which uses 2 dim changes
         // After client successfully changes dimension we receive PlayerActionPacket#DIMENSION_CHANGE_SUCCESS and continue in transfer
