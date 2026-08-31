@@ -55,6 +55,12 @@ public class TransferCallback {
     private final ClientConnection connection;
     private final ServerInfo targetServer;
     private final ServerInfo sourceServer;
+    /**
+     * The connection the player is being moved off. It stays open until the
+     * client is handed to the target, because cutting it while the source is
+     * still streaming leaves the client with a half delivered batch.
+     */
+    private volatile ClientConnection sourceConnection;
     private final int targetDimension;
     private volatile boolean fastTransfer;
 
@@ -69,6 +75,22 @@ public class TransferCallback {
         this.targetServer = connection.getServerInfo();
         this.sourceServer = sourceServer;
         this.targetDimension = targetDimension;
+    }
+
+    public void setSourceConnection(ClientConnection sourceConnection) {
+        this.sourceConnection = sourceConnection;
+    }
+
+    /**
+     * Closes the connection the player came from, once nothing is expected of
+     * it any more.
+     */
+    private void releaseSource() {
+        ClientConnection source = this.sourceConnection;
+        this.sourceConnection = null;
+        if (source != null) {
+            source.disconnect();
+        }
     }
 
     public void setFastTransfer(boolean fastTransfer) {
@@ -144,6 +166,7 @@ public class TransferCallback {
             handler.setTargetConnection(this.connection);
         }
         this.player.getConnection().setTransferQueueActive(false);
+        this.releaseSource();
         this.transferPhase = PHASE_2;
     }
 
@@ -231,6 +254,7 @@ public class TransferCallback {
         this.cancelTimeout();
         this.player.getRewriteData().clearTransferCallback(this);
         this.player.getConnection().discardTransferQueue();
+        this.releaseSource();
 
         this.player.getProxy().getEventManager().callEvent(new ServerTransferFailedEvent(
                 this.player, this.targetServer, ReconnectReason.TRANSFER_FAILED, reason, false));

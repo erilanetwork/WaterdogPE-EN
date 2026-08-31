@@ -165,7 +165,11 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
         transferCallback.startTimeout();
 
         oldConnection.getServerInfo().removeConnection(oldConnection);
-        oldConnection.disconnect();
+        // The server the player is leaving is kept open until the client is
+        // handed to this one. Closing it here cuts whatever it was still
+        // sending mid batch, which a client that left in a hurry does not
+        // survive.
+        transferCallback.setSourceConnection(oldConnection);
         this.player.setDownstreamConnection(this.connection);
         this.connection.getServerInfo().addConnection(this.connection);
         this.player.setAcceptPlayStatus(true);
