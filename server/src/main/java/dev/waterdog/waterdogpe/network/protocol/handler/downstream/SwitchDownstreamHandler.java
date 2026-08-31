@@ -50,6 +50,13 @@ import java.awt.Color;
 import static dev.waterdog.waterdogpe.network.protocol.user.PlayerRewriteUtils.*;
 
 public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
+
+    /**
+     * How long the screen takes to fade to black on a fast transfer, and the
+     * same span in ticks. The switch is completed once the fade covers it.
+     */
+    private static final float FADE_IN_SECONDS = 0.2f;
+    private static final int FADE_IN_TICKS = 4;
     private static final dev.waterdog.waterdogpe.logger.Logger logger = dev.waterdog.waterdogpe.ProxyServer.getInstance().getLogger();
 
     public SwitchDownstreamHandler(WaterdogPlayer player, ClientConnection connection) {
@@ -231,7 +238,7 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
         if (fastTransfer) {
             CameraInstructionPacket cameraPacket = new CameraInstructionPacket();
             CameraFadeInstruction fade = new CameraFadeInstruction(
-                    new CameraFadeInstruction.TimeData(0.5f, 1.5f, 0.5f),
+                    new CameraFadeInstruction.TimeData(FADE_IN_SECONDS, 1.5f, 0.5f),
                     new Color(14, 24, 52)
             );
             cameraPacket.setFadeInstruction(fade);
@@ -239,13 +246,17 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
 
             this.player.getConnection().setTransferQueueActive(true);
 
-            // Complete the transfer after 20 ticks (1 second) delay
+            // The player is wired to nothing until this runs: the server they
+            // came from is closed above and the target only takes over when the
+            // first phase completes. That gap is kept as short as the fade needs
+            // to cover the switch, because a client left with nothing for too
+            // long closes the connection on its own.
             this.player.getProxy().getScheduler().scheduleDelayed(() -> {
                 if (rewriteData.getTransferCallback() == transferCallback) {
                     transferCallback.onDimChangeSuccess();
                     transferCallback.onDimChangeSuccess();
                 }
-            }, 20);
+            }, FADE_IN_TICKS);
         } else if (newDimension == packet.getDimensionId()) {
             // Transfer between different dimensions
             injectPosition(this.player.getConnection(), packet.getPlayerPosition(), packet.getRotation(), rewriteData.getEntityId());
