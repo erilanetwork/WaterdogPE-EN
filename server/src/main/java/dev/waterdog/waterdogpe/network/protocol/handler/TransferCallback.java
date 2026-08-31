@@ -220,6 +220,10 @@ public class TransferCallback {
         if (this.transferPhase == RESET) {
             return; // already completed or failed
         }
+        // The phase says how far the hand-over got before it broke, which is
+        // what tells a failed dimension change apart from a target that went
+        // away or a client that closed on its own.
+        TransferPhase failedAt = this.transferPhase;
         // Release the transfer state first: the fallback connect() below is blocked while this
         // callback is active, and queued packets from the abandoned target must never reach the client.
         this.transferPhase = RESET;
@@ -236,7 +240,9 @@ public class TransferCallback {
         }
 
         this.connection.disconnect();
-        this.player.getLogger().warning("Failed to transfer " + this.player.getName() + " to " + this.targetServer.getServerName() + ": " + reason);
+        this.player.getLogger().warning("Failed to transfer " + this.player.getName() + " to "
+                + this.targetServer.getServerName() + " during " + failedAt
+                + " (fast=" + this.fastTransfer + ", playStatus=" + this.hasPlayStatus + "): " + reason);
     }
 
     public TransferPhase getPhase() {
