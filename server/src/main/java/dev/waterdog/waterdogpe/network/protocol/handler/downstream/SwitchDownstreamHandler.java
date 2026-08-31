@@ -163,6 +163,7 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
             return Signals.CANCEL;
         }
         transferCallback.startTimeout();
+        logger.info("[{}] transfer claimed to {}", this.player.getName(), this.connection.getServerInfo().getServerName());
 
         oldConnection.getServerInfo().removeConnection(oldConnection);
         // The server the player is leaving is kept open until the client is
@@ -261,7 +262,9 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
             // to cover the switch, because a client left with nothing for too
             // long closes the connection on its own.
             this.player.getProxy().getScheduler().scheduleDelayed(() -> {
-                if (rewriteData.getTransferCallback() == transferCallback) {
+                boolean current = rewriteData.getTransferCallback() == transferCallback;
+                logger.info("[{}] fast transfer completing, current={}", this.player.getName(), current);
+                if (current) {
                     transferCallback.onDimChangeSuccess();
                     transferCallback.onDimChangeSuccess();
                 }
