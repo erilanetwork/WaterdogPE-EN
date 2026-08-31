@@ -60,8 +60,13 @@ public class ProxyBatchBridge implements BedrockPacketHandler {
         ListIterator<BedrockPacketWrapper> iterator = batch.getPackets().listIterator();
         while (iterator.hasNext()) {
             BedrockPacketWrapper wrapper = iterator.next();
-            if (wrapper.getPacket() == null) {
-                this.decodePacket(wrapper, source.getPacketDirection());
+            if (wrapper.getPacket() == null && !this.decodePacket(wrapper, source.getPacketDirection())) {
+                // The packet could not be read. That happens when a server sends
+                // something the protocol library refuses, such as a skin larger
+                // than the size it accepts. The bytes are still valid for the
+                // other side, so the packet is passed on untouched instead of
+                // dropping the connection over it.
+                continue;
             }
 
             PacketSignal signal = this.handlePacket(wrapper.getPacket());
@@ -95,14 +100,19 @@ public class ProxyBatchBridge implements BedrockPacketHandler {
         }
     }
 
-    private void decodePacket(BedrockPacketWrapper wrapper, PacketDirection direction) {
+    /**
+     * Reads the packet held by the wrapper. Returns false if it could not be
+     * read, in which case the wrapper keeps holding only its raw bytes.
+     */
+    private boolean decodePacket(BedrockPacketWrapper wrapper, PacketDirection direction) {
         ByteBuf msg = wrapper.getPacketBuffer().retainedSlice();
         try {
             msg.skipBytes(wrapper.getHeaderLength()); // skip header
             wrapper.setPacket(this.codec.tryDecode(helper, msg, wrapper.getPacketId(), direction.getInbound()));
+            return true;
         } catch (Throwable t) {
-            logger.warning("Failed to decode packet", t);
-            throw t;
+            logger.warning("Failed to decode packet " + wrapper.getPacketId() + ", passing it through", t);
+            return false;
         } finally {
             msg.release();
         }
