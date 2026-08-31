@@ -52,11 +52,16 @@ import static dev.waterdog.waterdogpe.network.protocol.user.PlayerRewriteUtils.*
 public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
 
     /**
-     * How long the screen takes to fade to black on a fast transfer, and the
-     * same span in ticks. The switch is completed once the fade covers it.
+     * The fade that covers a fast transfer. The switch is completed once the
+     * screen is dark, so FADE_IN_TICKS follows FADE_IN_SECONDS: shortening the
+     * fade without shortening the wait would show the switch happening.
+     * The hold and the fade out only matter if the camera is never cleared,
+     * because completing the transfer clears it.
      */
-    private static final float FADE_IN_SECONDS = 0.2f;
-    private static final int FADE_IN_TICKS = 4;
+    private static final float FADE_IN_SECONDS = 0.15f;
+    private static final int FADE_IN_TICKS = 3;
+    private static final float FADE_HOLD_SECONDS = 0.4f;
+    private static final float FADE_OUT_SECONDS = 0.2f;
     private static final dev.waterdog.waterdogpe.logger.Logger logger = dev.waterdog.waterdogpe.ProxyServer.getInstance().getLogger();
 
     public SwitchDownstreamHandler(WaterdogPlayer player, ClientConnection connection) {
@@ -238,7 +243,7 @@ public class SwitchDownstreamHandler extends AbstractDownstreamHandler {
         if (fastTransfer) {
             CameraInstructionPacket cameraPacket = new CameraInstructionPacket();
             CameraFadeInstruction fade = new CameraFadeInstruction(
-                    new CameraFadeInstruction.TimeData(FADE_IN_SECONDS, 1.5f, 0.5f),
+                    new CameraFadeInstruction.TimeData(FADE_IN_SECONDS, FADE_HOLD_SECONDS, FADE_OUT_SECONDS),
                     new Color(14, 24, 52)
             );
             cameraPacket.setFadeInstruction(fade);
