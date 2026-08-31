@@ -583,7 +583,16 @@ public class WaterdogPlayer implements ProxiedPlayer {
         // Active downstream closed with no DisconnectPacket/timeout (those are handled in
         // ConnectedDownstreamHandler/onDownstreamTimeout). Fail over instead of leaving the player frozen on
         // a dead connection. Guards skip this when a transfer/disconnect is already in flight.
+        // A transfer that is under way leaves the player on the old downstream
+        // until it completes, so that connection closing is expected: a game
+        // server shuts down as soon as the last player is on their way out. It
+        // must not be read as the player losing the server they are on.
+        TransferCallback activeTransfer = this.rewriteData.getTransferCallback();
+        boolean transferring = activeTransfer != null
+                && activeTransfer.getPhase() != TransferCallback.TransferPhase.RESET;
+
         if (connection == this.clientConnection
+                && !transferring
                 && this.getPendingConnection() == null
                 && this.pendingServers.isEmpty()
                 && !this.disconnected.get()
