@@ -148,7 +148,6 @@ public class TransferCallback {
     }
 
     private void onTransferPhase1Completed() {
-        this.player.getLogger().info("[" + this.player.getName() + "] transfer phase 1 to " + this.targetServer.getServerName());
         RewriteData rewriteData = this.player.getRewriteData();
         injectEntityImmobile(this.player.getConnection(), rewriteData.getEntityId(), true);
 
@@ -172,7 +171,6 @@ public class TransferCallback {
     }
 
     private void onTransferPhase2Completed() {
-        this.player.getLogger().info("[" + this.player.getName() + "] transfer phase 2 to " + this.targetServer.getServerName());
         if (!this.connection.isConnected()) {
             this.onTransferFailed();
             return;

@@ -48,17 +48,8 @@ public class PacketQueueHandler extends ChannelDuplexHandler {
         }
 
         BedrockBatchWrapper batch;
-        int batches = 0;
-        java.util.Map<String, Integer> kinds = new java.util.LinkedHashMap<>();
         while ((batch = this.queue.poll()) != null) {
             if (send) {
-                batches++;
-                for (org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper wrapper : batch.getPackets()) {
-                    String name = wrapper.getPacket() == null
-                            ? "raw#" + wrapper.getPacketId()
-                            : wrapper.getPacket().getClass().getSimpleName();
-                    kinds.merge(name, 1, Integer::sum);
-                }
                 ctx.write(batch);
             } else {
                 batch.release();
@@ -66,7 +57,6 @@ public class PacketQueueHandler extends ChannelDuplexHandler {
         }
 
         if (send) {
-            logger.info("[{}] released {} queued batches: {}", this.session.getSocketAddress(), batches, kinds);
             ctx.flush();
         }
     }
