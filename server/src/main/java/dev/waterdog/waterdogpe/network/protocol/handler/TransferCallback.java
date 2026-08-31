@@ -207,8 +207,21 @@ public class TransferCallback {
         this.player.getProxy().getEventManager().callEvent(event);
     }
 
-    public void onPlayStatus() {
+    public synchronized void onPlayStatus() {
         this.hasPlayStatus = true;
+
+        // The client is wired to nothing while the transfer is open: the server
+        // it came from is closed as soon as the target sends START_GAME, and it
+        // is only handed to the target when phase one completes. On the fast
+        // path that wait is a fixed second, which is long enough for a client to
+        // give up and close. The target saying the player has spawned means
+        // there is nothing left to wait for, so the transfer is finished here
+        // and the scheduled completion becomes a fallback.
+        if (this.fastTransfer && this.transferPhase == PHASE_1) {
+            this.onDimChangeSuccess();
+            this.onDimChangeSuccess();
+        }
+
         tryTransferFinalize();
     }
 
