@@ -98,6 +98,18 @@ public abstract class AbstractDownstreamHandler implements ProxyPacketHandler {
     }
 
     @Override
+    public PacketSignal handle(PlayerListPacket packet) {
+        PacketSignal signal = PacketSignal.UNHANDLED;
+        for (PlayerListPacket.Entry entry : packet.getEntries()) {
+            if (entry.getXuid() != null && !entry.getXuid().isEmpty()) {
+                entry.setXuid(""); // we need to send empty XUID's, otherwise invite bots are triggering
+                signal = PacketSignal.HANDLED;
+            }
+        }
+        return signal;
+    }
+
+    @Override
     public PacketSignal handle(AvailableCommandsPacket packet) {
         if (!this.player.getProxy().getConfiguration().injectCommands()) {
             return PacketSignal.UNHANDLED;
